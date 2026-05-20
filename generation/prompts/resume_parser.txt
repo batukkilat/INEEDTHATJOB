@@ -1,0 +1,14 @@
+Extract all professional profile information from the resume text below.
+
+Rules:
+- Extract every skill mentioned (technical tools, languages, frameworks, soft skills).
+- For proficiency, infer from context: years used, seniority level, or explicit mentions.
+- For experience dates, use YYYY-MM format. If only year is given, use YYYY-01 / YYYY-12.
+- For achievements, extract bullet points under each role. Include any metrics or results.
+- skills_used in achievements should be a comma-separated string of relevant skills.
+- If end_date is missing and it's the most recent role, leave it null (= current job).
+- Extract certifications only if explicitly listed (not just skills).
+- Extract projects if mentioned (personal projects, open source, notable work outside employment).
+
+RESUME:
+{resume_text}

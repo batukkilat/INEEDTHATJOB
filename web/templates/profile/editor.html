@@ -3,8 +3,19 @@
 
 {% block content %}
 <div class="max-w-4xl">
-  <h1 class="text-2xl font-bold text-gray-900 mb-2">My Profile</h1>
-  <p class="text-sm text-gray-500 mb-8">This is the source of truth for all generated resumes and cover letters.</p>
+  <div class="flex items-center justify-between mb-2">
+    <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+    <button
+      hx-get="/profile/import"
+      hx-target="#import-zone"
+      hx-swap="innerHTML"
+      class="btn btn-primary">
+      ↑ Import from Resume
+    </button>
+  </div>
+  <p class="text-sm text-gray-500 mb-4">This is the source of truth for all generated resumes and cover letters.</p>
+
+  <div id="import-zone" class="mb-4"></div>
 
   <!-- Jump nav -->
   <div class="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-3">

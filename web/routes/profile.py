@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import HTMLResponse
 from web.templates_env import templates
 from sqlmodel import Session
 from db.database import get_session
 from db.models import Skill, Experience, Achievement, Education, Certification, Project
 import profile.service as svc
+import profile.importer as importer
 
 router = APIRouter()
 
@@ -28,6 +29,42 @@ def profile_page(request: Request, session: Session = Depends(get_session)):
         "certifications": svc.get_certifications(session),
         "projects": svc.get_projects(session),
     })
+
+
+# ── Resume import ────────────────────────────────────────────────────────────
+
+@router.get("/import", response_class=HTMLResponse)
+def import_form(request: Request):
+    return _r(request, "partials/import_form.html", {})
+
+
+@router.post("/import", response_class=HTMLResponse)
+async def import_resume(
+    request: Request,
+    session: Session = Depends(get_session),
+    resume: UploadFile = File(...),
+):
+    content = await resume.read()
+    if len(content) > 10 * 1024 * 1024:
+        return _r(request, "partials/import_form.html", {
+            "error": "File too large (max 10 MB)."
+        })
+    try:
+        text = importer.extract_text(content, resume.filename or "upload")
+        parsed = importer.parse_resume(text)
+        counts = importer.save_to_profile(session, parsed)
+        msg = (
+            f"Imported: {counts['skills']} skills, {counts['experiences']} roles, "
+            f"{counts['education']} education, {counts['certifications']} certs, "
+            f"{counts['projects']} projects."
+        )
+        return _r(request, "partials/import_form.html", {"success": msg})
+    except ValueError as e:
+        return _r(request, "partials/import_form.html", {"error": str(e)})
+    except Exception as e:
+        return _r(request, "partials/import_form.html", {
+            "error": f"Unexpected error: {e}"
+        })
 
 
 # ── Skills ───────────────────────────────────────────────────────────────────
