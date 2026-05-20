@@ -1,0 +1,68 @@
+{% if edu %}
+<tr id="education-{{ edu.id }}">
+  <form hx-put="/profile/education/{{ edu.id }}"
+        hx-target="#education-{{ edu.id }}"
+        hx-swap="outerHTML">
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-3">
+  <form hx-post="/profile/education"
+        hx-target="#education-tbody"
+        hx-swap="beforeend">
+{% endif %}
+  {% if edu %}
+    <td class="px-4 py-2"><input type="text" name="institution" value="{{ edu.institution }}" required></td>
+    <td class="px-4 py-2"><input type="text" name="degree" value="{{ edu.degree }}" required></td>
+    <td class="px-4 py-2"><input type="text" name="field" value="{{ edu.field or '' }}"></td>
+    <td class="px-4 py-2">
+      <div class="flex gap-1">
+        <input type="text" name="start_date" value="{{ edu.start_date or '' }}" placeholder="2018-07" style="width:90px">
+        <input type="text" name="end_date" value="{{ edu.end_date or '' }}" placeholder="2022-06" style="width:90px">
+      </div>
+    </td>
+    <td class="px-4 py-2"><input type="text" name="gpa" value="{{ edu.gpa or '' }}" style="width:60px"></td>
+    <td class="px-4 py-2 whitespace-nowrap">
+      <button type="submit" class="btn btn-primary btn-sm mr-1">Save</button>
+      <button type="button"
+        hx-get="/profile/education/{{ edu.id }}/row"
+        hx-target="#education-{{ edu.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Cancel</button>
+    </td>
+  {% else %}
+    <div class="grid grid-cols-3 gap-3 mb-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Institution *</label>
+        <input type="text" name="institution" required placeholder="Universitas Indonesia">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Degree *</label>
+        <input type="text" name="degree" required placeholder="Bachelor of Computer Science">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Field</label>
+        <input type="text" name="field" placeholder="Computer Science">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Start</label>
+        <input type="text" name="start_date" placeholder="2018-07">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">End</label>
+        <input type="text" name="end_date" placeholder="2022-06">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">GPA</label>
+        <input type="text" name="gpa" placeholder="3.8">
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">Add Education</button>
+      <button type="button" onclick="document.getElementById('education-add-form').innerHTML=''" class="btn btn-ghost btn-sm">Cancel</button>
+    </div>
+  {% endif %}
+  </form>
+{% if edu %}
+</tr>
+{% else %}
+</div>
+{% endif %}

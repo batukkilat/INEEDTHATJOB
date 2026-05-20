@@ -1,0 +1,22 @@
+<tr id="certification-{{ cert.id }}">
+  <td class="px-4 py-2 font-medium text-gray-900">{{ cert.name }}</td>
+  <td class="px-4 py-2 text-gray-600">{{ cert.issuer or '—' }}</td>
+  <td class="px-4 py-2 text-gray-400 text-xs">{{ cert.date_obtained or '—' }}</td>
+  <td class="px-4 py-2 text-gray-400 text-xs">{{ cert.expiry_date or '—' }}</td>
+  <td class="px-4 py-2 whitespace-nowrap">
+    <button
+      hx-get="/profile/certifications/{{ cert.id }}/edit"
+      hx-target="#certification-{{ cert.id }}"
+      hx-swap="outerHTML"
+      class="btn btn-ghost btn-sm mr-1">Edit</button>
+    <button
+      hx-delete="/profile/certifications/{{ cert.id }}"
+      hx-target="#certification-{{ cert.id }}"
+      hx-swap="outerHTML"
+      hx-confirm="Delete this certification?"
+      class="btn btn-ghost btn-sm text-red-500">Delete</button>
+  </td>
+</tr>
+{% if oob_clear_cert_form is defined and oob_clear_cert_form %}
+<div id="cert-add-form" hx-swap-oob="true"></div>
+{% endif %}

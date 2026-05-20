@@ -1,0 +1,33 @@
+<tr id="skill-{{ skill.id }}">
+  <form hx-put="/profile/skills/{{ skill.id }}"
+        hx-target="#skill-{{ skill.id }}"
+        hx-swap="outerHTML">
+    <td class="px-4 py-2"><input type="text" name="name" value="{{ skill.name }}" required style="min-width:120px"></td>
+    <td class="px-4 py-2">
+      <select name="category">
+        <option value="">—</option>
+        {% for c in ['technical', 'soft', 'domain', 'language'] %}
+        <option value="{{ c }}" {% if skill.category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td class="px-4 py-2">
+      <select name="proficiency">
+        <option value="">—</option>
+        {% for p in ['expert', 'advanced', 'intermediate', 'beginner'] %}
+        <option value="{{ p }}" {% if skill.proficiency == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td class="px-4 py-2"><input type="number" name="years_experience" value="{{ skill.years_experience or '' }}" step="0.5" style="width:70px"></td>
+    <td class="px-4 py-2"><input type="text" name="keywords" value="{{ skill.keywords or '' }}" placeholder="Python, python3"></td>
+    <td class="px-4 py-2 whitespace-nowrap">
+      <button type="submit" class="btn btn-primary btn-sm mr-1">Save</button>
+      <button type="button"
+        hx-get="/profile/skills/{{ skill.id }}/row"
+        hx-target="#skill-{{ skill.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Cancel</button>
+    </td>
+  </form>
+</tr>

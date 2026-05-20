@@ -1,0 +1,76 @@
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    color: #d1d5db;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+.nav-link:hover {
+    background-color: #374151;
+    color: #fff;
+}
+.nav-link.active {
+    background-color: #1f2937;
+    color: #fff;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border: none;
+}
+.btn-primary { background-color: #2563eb; color: #fff; }
+.btn-primary:hover { background-color: #1d4ed8; }
+.btn-secondary { background-color: #fff; color: #374151; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background-color: #f9fafb; }
+.btn-danger { background-color: #dc2626; color: #fff; }
+.btn-danger:hover { background-color: #b91c1c; }
+.btn-ghost { background-color: transparent; color: #6b7280; }
+.btn-ghost:hover { background-color: #f3f4f6; color: #374151; }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+input[type="text"], input[type="number"], input[type="email"], input[type="url"],
+input[type="date"], textarea, select {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    color: #111827;
+    outline: none;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+.htmx-request .htmx-indicator { opacity: 1; }
+.htmx-request.htmx-indicator { opacity: 1; }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.badge-blue   { background-color: #dbeafe; color: #1d4ed8; }
+.badge-green  { background-color: #dcfce7; color: #15803d; }
+.badge-yellow { background-color: #fef9c3; color: #a16207; }
+.badge-red    { background-color: #fee2e2; color: #b91c1c; }
+.badge-gray   { background-color: #f3f4f6; color: #374151; }

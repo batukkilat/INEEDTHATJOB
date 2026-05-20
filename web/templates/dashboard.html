@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — INEEDTHATJOB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+  <!-- Stats -->
+  <div id="stats" class="grid grid-cols-3 gap-4 mb-8">
+    {% include "partials/stats.html" %}
+  </div>
+
+  <!-- Quick actions -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Pipeline</h2>
+    <div class="flex gap-3">
+      <button class="btn btn-primary" disabled title="Coming in Phase 2">
+        Run Pipeline Now
+      </button>
+      <span class="text-sm text-gray-400 self-center">Scraping not yet configured — complete Phase 2 first.</span>
+    </div>
+  </div>
+
+  <!-- Activity feed -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Activity</h2>
+    {% if recent_activity %}
+      <ul class="space-y-2">
+        {% for log in recent_activity %}
+        <li class="flex items-start gap-3 text-sm">
+          <span class="text-gray-400 whitespace-nowrap">{{ log.timestamp[:16] }}</span>
+          <span class="badge
+            {% if log.action == 'submitted' %}badge-green
+            {% elif log.action == 'failed' %}badge-red
+            {% elif log.action == 'approved' %}badge-blue
+            {% else %}badge-gray{% endif %}">{{ log.action }}</span>
+          <span class="text-gray-700">{{ log.details or '' }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-gray-400">No activity yet. Run the pipeline to get started.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

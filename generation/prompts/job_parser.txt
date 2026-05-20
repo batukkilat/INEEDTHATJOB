@@ -1,0 +1,18 @@
+Extract structured requirements from the following job posting.
+
+Return JSON matching this schema:
+{
+  "required_skills": ["skill1", "skill2"],
+  "preferred_skills": ["skill3"],
+  "years_experience_min": 3,
+  "years_experience_max": null,
+  "education_level": "bachelor",
+  "languages": ["English", "Indonesian"],
+  "experience_level": "mid"
+}
+
+If a field cannot be determined, use null or an empty array.
+experience_level must be one of: junior, mid, senior, lead
+
+JOB POSTING:
+{job_description}

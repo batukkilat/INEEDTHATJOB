@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Settings — INEEDTHATJOB{% endblock %}
+
+{% block content %}
+<div class="max-w-xl">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
+
+  {% if saved %}
+  <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">Preferences saved.</div>
+  {% endif %}
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Job Preferences</h2>
+    <form method="post" action="/settings/preferences" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Target Roles <span class="text-gray-400 font-normal">(JSON array, e.g. ["Backend Engineer"])</span></label>
+        <input type="text" name="target_roles" value="{{ prefs.target_roles or '' }}">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Target Locations <span class="text-gray-400 font-normal">(JSON array)</span></label>
+        <input type="text" name="target_locations" value="{{ prefs.target_locations or '' }}">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Min Salary (monthly)</label>
+          <input type="number" name="min_salary" value="{{ prefs.min_salary or '' }}">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Max Salary (monthly)</label>
+          <input type="number" name="max_salary" value="{{ prefs.max_salary or '' }}">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+        <select name="salary_currency">
+          <option {% if prefs.salary_currency == 'IDR' %}selected{% endif %}>IDR</option>
+          <option {% if prefs.salary_currency == 'USD' %}selected{% endif %}>USD</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+        <select name="company_size_preference">
+          <option value="">Any</option>
+          {% for v in ['startup', 'mid', 'enterprise'] %}
+          <option value="{{ v }}" {% if prefs.company_size_preference == v %}selected{% endif %}>{{ v | capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="pt-2">
+        <button type="submit" class="btn btn-primary">Save Preferences</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+You are writing a professional cover letter for a job application.
+
+Write a compelling, concise cover letter (3-4 paragraphs) that:
+- Opens with genuine enthusiasm for the specific role and company
+- Highlights 2-3 of the most relevant experiences from the profile
+- Addresses specific requirements from the job description
+- Closes with a confident call to action
+
+Rules:
+- Match the language of the job posting ({language}).
+- Do not use generic phrases like "I am writing to apply..."
+- Do not claim experiences or skills not in the profile.
+- Tone: professional but human. Adapt formality to company type ({company_type}).
+
+JOB TITLE: {job_title}
+COMPANY: {company}
+JOB DESCRIPTION:
+{job_description}
+
+USER PROFILE:
+{profile_json}
+
+FROM NAME: {from_name}

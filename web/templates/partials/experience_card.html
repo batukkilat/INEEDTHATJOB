@@ -1,0 +1,52 @@
+<div id="experience-{{ experience.id }}" class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+  <div class="flex items-start justify-between">
+    <div>
+      <h3 class="font-semibold text-gray-900">{{ experience.title }}</h3>
+      <p class="text-sm text-gray-600 mt-0.5">
+        {{ experience.company }}
+        {% if experience.location %} &middot; {{ experience.location }}{% endif %}
+        {% if experience.is_remote %} &middot; <span class="text-blue-500">Remote</span>{% endif %}
+      </p>
+      <p class="text-xs text-gray-400 mt-0.5">{{ experience.start_date }} — {{ experience.end_date or 'Present' }}</p>
+    </div>
+    <div class="flex gap-2 flex-shrink-0 ml-4">
+      <button
+        hx-get="/profile/experiences/{{ experience.id }}/edit"
+        hx-target="#experience-{{ experience.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Edit</button>
+      <button
+        hx-delete="/profile/experiences/{{ experience.id }}"
+        hx-target="#experience-{{ experience.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Delete this experience?"
+        class="btn btn-ghost btn-sm text-red-500">Delete</button>
+    </div>
+  </div>
+
+  {% if experience.description %}
+  <p class="text-sm text-gray-600 mt-3 leading-relaxed">{{ experience.description }}</p>
+  {% endif %}
+
+  <!-- Achievements -->
+  <div class="mt-4">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Achievements</p>
+      <button
+        hx-get="/profile/experiences/{{ experience.id }}/achievements/new"
+        hx-target="#achievement-add-form-{{ experience.id }}"
+        hx-swap="innerHTML"
+        class="btn btn-ghost btn-sm text-xs">+ Add</button>
+    </div>
+    <div id="achievement-add-form-{{ experience.id }}" class="mb-2"></div>
+    <ul id="achievements-{{ experience.id }}" class="space-y-1">
+      {% for achievement in experience.achievements %}
+      {% set exp_id = experience.id %}
+      {% include "partials/achievement_row.html" %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% if oob_clear_experience_form is defined and oob_clear_experience_form %}
+<div id="experience-add-form" hx-swap-oob="true"></div>
+{% endif %}

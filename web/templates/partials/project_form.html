@@ -1,0 +1,49 @@
+{% if project %}
+<div id="project-{{ project.id }}" class="bg-white rounded-lg shadow-sm border border-blue-200 p-4">
+  <form hx-put="/profile/projects/{{ project.id }}"
+        hx-target="#project-{{ project.id }}"
+        hx-swap="outerHTML"
+        class="space-y-3">
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-3">
+  <form hx-post="/profile/projects"
+        hx-target="#projects-list"
+        hx-swap="beforeend"
+        class="space-y-3">
+{% endif %}
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+        <input type="text" name="name" value="{{ project.name if project else '' }}" required placeholder="INEEDTHATJOB">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">URL</label>
+        <input type="url" name="url" value="{{ project.url if project else '' }}" placeholder="https://github.com/...">
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
+      <textarea name="description" rows="2" placeholder="What does this project do?">{{ project.description if project else '' }}</textarea>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Highlights</label>
+      <input type="text" name="highlights" value="{{ project.highlights if project else '' }}" placeholder="Key accomplishment or impact">
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Skills Used</label>
+      <input type="text" name="skills_used" value="{{ project.skills_used if project else '' }}" placeholder="Python, FastAPI, HTMX">
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">{{ 'Save' if project else 'Add Project' }}</button>
+      {% if project %}
+      <button type="button"
+        hx-get="/profile/projects/{{ project.id }}/card"
+        hx-target="#project-{{ project.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Cancel</button>
+      {% else %}
+      <button type="button" onclick="document.getElementById('project-add-form').innerHTML=''" class="btn btn-ghost btn-sm">Cancel</button>
+      {% endif %}
+    </div>
+  </form>
+</div>

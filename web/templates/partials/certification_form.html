@@ -1,0 +1,49 @@
+{% if cert %}
+<tr id="certification-{{ cert.id }}">
+  <form hx-put="/profile/certifications/{{ cert.id }}"
+        hx-target="#certification-{{ cert.id }}"
+        hx-swap="outerHTML">
+    <td class="px-4 py-2"><input type="text" name="name" value="{{ cert.name }}" required></td>
+    <td class="px-4 py-2"><input type="text" name="issuer" value="{{ cert.issuer or '' }}"></td>
+    <td class="px-4 py-2"><input type="text" name="date_obtained" value="{{ cert.date_obtained or '' }}" placeholder="2023-05" style="width:90px"></td>
+    <td class="px-4 py-2"><input type="text" name="expiry_date" value="{{ cert.expiry_date or '' }}" placeholder="2026-05" style="width:90px"></td>
+    <td class="px-4 py-2 whitespace-nowrap">
+      <button type="submit" class="btn btn-primary btn-sm mr-1">Save</button>
+      <button type="button"
+        hx-get="/profile/certifications/{{ cert.id }}/row"
+        hx-target="#certification-{{ cert.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Cancel</button>
+    </td>
+  </form>
+</tr>
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-3">
+  <form hx-post="/profile/certifications"
+        hx-target="#certs-tbody"
+        hx-swap="beforeend">
+    <div class="grid grid-cols-4 gap-3 mb-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+        <input type="text" name="name" required placeholder="AWS Solutions Architect">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Issuer</label>
+        <input type="text" name="issuer" placeholder="Amazon">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Obtained</label>
+        <input type="text" name="date_obtained" placeholder="2023-05">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Expires</label>
+        <input type="text" name="expiry_date" placeholder="2026-05">
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">Add Certification</button>
+      <button type="button" onclick="document.getElementById('cert-add-form').innerHTML=''" class="btn btn-ghost btn-sm">Cancel</button>
+    </div>
+  </form>
+</div>
+{% endif %}

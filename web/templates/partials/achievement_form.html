@@ -1,0 +1,43 @@
+{% if achievement %}
+<li id="achievement-{{ achievement.id }}">
+  <form hx-put="/profile/achievements/{{ achievement.id }}"
+        hx-target="#achievement-{{ achievement.id }}"
+        hx-swap="outerHTML"
+        class="flex gap-2 items-start">
+    <div class="flex-1 space-y-2">
+      <input type="text" name="description" value="{{ achievement.description }}" required placeholder="Led migration to microservices...">
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text" name="metrics" value="{{ achievement.metrics or '' }}" placeholder="Reduced deploy time by 60%">
+        <input type="text" name="skills_used" value="{{ achievement.skills_used or '' }}" placeholder="Python, Docker">
+      </div>
+    </div>
+    <div class="flex gap-1 flex-shrink-0">
+      <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      <button type="button"
+        hx-get="/profile/achievements/{{ achievement.id }}/row"
+        hx-target="#achievement-{{ achievement.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">×</button>
+    </div>
+  </form>
+</li>
+{% else %}
+<div class="mb-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+  <form hx-post="/profile/experiences/{{ experience_id }}/achievements"
+        hx-target="#achievements-{{ experience_id }}"
+        hx-swap="beforeend"
+        class="space-y-2">
+    <input type="text" name="description" required placeholder="What did you accomplish?">
+    <div class="grid grid-cols-2 gap-2">
+      <input type="text" name="metrics" placeholder="Metric (e.g. 60% faster)">
+      <input type="text" name="skills_used" placeholder="Skills used">
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">Add</button>
+      <button type="button"
+        onclick="document.getElementById('achievement-add-form-{{ experience_id }}').innerHTML=''"
+        class="btn btn-ghost btn-sm">Cancel</button>
+    </div>
+  </form>
+</div>
+{% endif %}

@@ -1,0 +1,28 @@
+<li id="achievement-{{ achievement.id }}" class="flex items-start gap-2 text-sm group">
+  <span class="text-gray-400 mt-1">•</span>
+  <div class="flex-1">
+    <span class="text-gray-700">{{ achievement.description }}</span>
+    {% if achievement.metrics %}
+    <span class="text-green-600 ml-1">— {{ achievement.metrics }}</span>
+    {% endif %}
+    {% if achievement.skills_used %}
+    <span class="text-xs text-gray-400 ml-1">[{{ achievement.skills_used }}]</span>
+    {% endif %}
+  </div>
+  <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+    <button
+      hx-get="/profile/achievements/{{ achievement.id }}/edit"
+      hx-target="#achievement-{{ achievement.id }}"
+      hx-swap="outerHTML"
+      class="btn btn-ghost btn-sm text-xs">Edit</button>
+    <button
+      hx-delete="/profile/achievements/{{ achievement.id }}"
+      hx-target="#achievement-{{ achievement.id }}"
+      hx-swap="outerHTML"
+      hx-confirm="Delete this achievement?"
+      class="btn btn-ghost btn-sm text-xs text-red-500">×</button>
+  </div>
+</li>
+{% if oob_clear_achievement_form is defined and oob_clear_achievement_form %}
+<div id="achievement-add-form-{{ oob_clear_achievement_form }}" hx-swap-oob="true"></div>
+{% endif %}

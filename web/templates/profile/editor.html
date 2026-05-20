@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Profile — INEEDTHATJOB{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">My Profile</h1>
+  <p class="text-sm text-gray-500 mb-8">This is the source of truth for all generated resumes and cover letters.</p>
+
+  <!-- Jump nav -->
+  <div class="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-3">
+    <a href="#skills" class="text-blue-600 hover:underline">Skills</a>
+    <a href="#experience" class="text-blue-600 hover:underline">Experience</a>
+    <a href="#education" class="text-blue-600 hover:underline">Education</a>
+    <a href="#certifications" class="text-blue-600 hover:underline">Certifications</a>
+    <a href="#projects" class="text-blue-600 hover:underline">Projects</a>
+  </div>
+
+  <!-- ── Skills ─────────────────────────────────────────────────────────── -->
+  <section id="skills" class="mb-10 scroll-mt-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-gray-800">Skills</h2>
+      <button
+        hx-get="/profile/skills/new"
+        hx-target="#skill-add-form"
+        hx-swap="innerHTML"
+        class="btn btn-secondary btn-sm">+ Add Skill</button>
+    </div>
+    <div id="skill-add-form" class="mb-3"></div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Name</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Category</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Proficiency</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Years</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">ATS Keywords</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody id="skills-tbody" class="divide-y divide-gray-100">
+          {% for skill in skills %}
+          {% include "partials/skill_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if not skills %}
+      <div class="px-4 py-6 text-sm text-gray-400 text-center">No skills yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── Experience ─────────────────────────────────────────────────────── -->
+  <section id="experience" class="mb-10 scroll-mt-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-gray-800">Experience</h2>
+      <button
+        hx-get="/profile/experiences/new"
+        hx-target="#experience-add-form"
+        hx-swap="innerHTML"
+        class="btn btn-secondary btn-sm">+ Add Experience</button>
+    </div>
+    <div id="experience-add-form" class="mb-3"></div>
+    <div id="experiences-list" class="space-y-4">
+      {% for experience in experiences %}
+      {% include "partials/experience_card.html" %}
+      {% endfor %}
+      {% if not experiences %}
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No experience yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── Education ──────────────────────────────────────────────────────── -->
+  <section id="education" class="mb-10 scroll-mt-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-gray-800">Education</h2>
+      <button
+        hx-get="/profile/education/new"
+        hx-target="#education-add-form"
+        hx-swap="innerHTML"
+        class="btn btn-secondary btn-sm">+ Add Education</button>
+    </div>
+    <div id="education-add-form" class="mb-3"></div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Institution</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Degree</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Field</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Period</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">GPA</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody id="education-tbody" class="divide-y divide-gray-100">
+          {% for edu in education %}
+          {% include "partials/education_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if not education %}
+      <div class="px-4 py-6 text-sm text-gray-400 text-center">No education yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── Certifications ─────────────────────────────────────────────────── -->
+  <section id="certifications" class="mb-10 scroll-mt-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-gray-800">Certifications</h2>
+      <button
+        hx-get="/profile/certifications/new"
+        hx-target="#cert-add-form"
+        hx-swap="innerHTML"
+        class="btn btn-secondary btn-sm">+ Add Certification</button>
+    </div>
+    <div id="cert-add-form" class="mb-3"></div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Name</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Issuer</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Obtained</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-500">Expires</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody id="certs-tbody" class="divide-y divide-gray-100">
+          {% for cert in certifications %}
+          {% include "partials/certification_row.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if not certifications %}
+      <div class="px-4 py-6 text-sm text-gray-400 text-center">No certifications yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── Projects ───────────────────────────────────────────────────────── -->
+  <section id="projects" class="mb-10 scroll-mt-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-semibold text-gray-800">Projects</h2>
+      <button
+        hx-get="/profile/projects/new"
+        hx-target="#project-add-form"
+        hx-swap="innerHTML"
+        class="btn btn-secondary btn-sm">+ Add Project</button>
+    </div>
+    <div id="project-add-form" class="mb-3"></div>
+    <div id="projects-list" class="space-y-3">
+      {% for project in projects %}
+      {% include "partials/project_card.html" %}
+      {% endfor %}
+      {% if not projects %}
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No projects yet.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

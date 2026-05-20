@@ -1,0 +1,57 @@
+{% if experience %}
+<div id="experience-{{ experience.id }}" class="bg-white rounded-lg shadow-sm border border-blue-200 p-5">
+  <form hx-put="/profile/experiences/{{ experience.id }}"
+        hx-target="#experience-{{ experience.id }}"
+        hx-swap="outerHTML">
+{% else %}
+<div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-3">
+  <form hx-post="/profile/experiences"
+        hx-target="#experiences-list"
+        hx-swap="beforeend">
+{% endif %}
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Title *</label>
+        <input type="text" name="title" value="{{ experience.title if experience else '' }}" required placeholder="Senior Backend Engineer">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Company *</label>
+        <input type="text" name="company" value="{{ experience.company if experience else '' }}" required placeholder="Acme Corp">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Start Date *</label>
+        <input type="text" name="start_date" value="{{ experience.start_date if experience else '' }}" required placeholder="2022-03">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">End Date <span class="text-gray-400">(leave blank if current)</span></label>
+        <input type="text" name="end_date" value="{{ experience.end_date if experience else '' }}" placeholder="2024-01">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Location</label>
+        <input type="text" name="location" value="{{ experience.location if experience else '' }}" placeholder="Jakarta, Indonesia">
+      </div>
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input type="checkbox" name="is_remote" value="1" {% if experience and experience.is_remote %}checked{% endif %}>
+          Remote
+        </label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
+      <textarea name="description" rows="2" placeholder="Brief role description...">{{ experience.description if experience else '' }}</textarea>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">{{ 'Save' if experience else 'Add Experience' }}</button>
+      {% if experience %}
+      <button type="button"
+        hx-get="/profile/experiences/{{ experience.id }}/card"
+        hx-target="#experience-{{ experience.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Cancel</button>
+      {% else %}
+      <button type="button" onclick="document.getElementById('experience-add-form').innerHTML=''" class="btn btn-ghost btn-sm">Cancel</button>
+      {% endif %}
+    </div>
+  </form>
+</div>

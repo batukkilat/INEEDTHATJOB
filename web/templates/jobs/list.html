@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Jobs — INEEDTHATJOB{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Jobs</h1>
+    <span class="text-sm text-gray-400">{{ jobs | length }} listings</span>
+  </div>
+
+  {% if jobs %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Title</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Company</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Platform</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Score</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for job in jobs %}
+        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/jobs/{{ job.id }}'">
+          <td class="px-4 py-3 font-medium text-gray-900">{{ job.title }}</td>
+          <td class="px-4 py-3 text-gray-600">{{ job.company }}</td>
+          <td class="px-4 py-3">
+            <span class="badge badge-gray">{{ job.platform }}</span>
+          </td>
+          <td class="px-4 py-3">
+            {% if job.compatibility_score is not none %}
+              <span class="font-semibold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.4 %}text-yellow-600{% else %}text-red-500{% endif %}">
+                {{ (job.compatibility_score * 100) | int }}%
+              </span>
+            {% else %}
+              <span class="text-gray-300">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status == 'review_ready' %}badge-blue{% elif job.status == 'new' %}badge-gray{% else %}badge-yellow{% endif %}">
+              {{ job.status }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-gray-400">{{ job.scraped_at[:10] if job.scraped_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+    <p class="text-gray-400 text-sm">No jobs yet. Run the pipeline to scrape listings.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

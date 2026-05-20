@@ -1,0 +1,42 @@
+<div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-3">
+  <form hx-post="/profile/skills"
+        hx-target="#skills-tbody"
+        hx-swap="beforeend">
+    <div class="grid grid-cols-5 gap-3 mb-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+        <input type="text" name="name" required placeholder="Python">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+        <select name="category">
+          <option value="">—</option>
+          {% for c in ['technical', 'soft', 'domain', 'language'] %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Proficiency</label>
+        <select name="proficiency">
+          <option value="">—</option>
+          {% for p in ['expert', 'advanced', 'intermediate', 'beginner'] %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Years</label>
+        <input type="number" name="years_experience" step="0.5" placeholder="3">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">ATS Keywords</label>
+        <input type="text" name="keywords" placeholder="Python, python3, py">
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">Add Skill</button>
+      <button type="button" onclick="document.getElementById('skill-add-form').innerHTML=''" class="btn btn-ghost btn-sm">Cancel</button>
+    </div>
+  </form>
+</div>

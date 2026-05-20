@@ -1,0 +1,37 @@
+<div id="project-{{ project.id }}" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+  <div class="flex items-start justify-between">
+    <div class="flex-1">
+      <div class="flex items-center gap-2">
+        <h3 class="font-medium text-gray-900">{{ project.name }}</h3>
+        {% if project.url %}
+        <a href="{{ project.url }}" target="_blank" class="text-xs text-blue-500 hover:underline">↗ link</a>
+        {% endif %}
+      </div>
+      {% if project.description %}
+      <p class="text-sm text-gray-600 mt-1">{{ project.description }}</p>
+      {% endif %}
+      {% if project.highlights %}
+      <p class="text-sm text-gray-500 mt-1 italic">{{ project.highlights }}</p>
+      {% endif %}
+      {% if project.skills_used %}
+      <p class="text-xs text-gray-400 mt-1">{{ project.skills_used }}</p>
+      {% endif %}
+    </div>
+    <div class="flex gap-2 flex-shrink-0 ml-4">
+      <button
+        hx-get="/profile/projects/{{ project.id }}/edit"
+        hx-target="#project-{{ project.id }}"
+        hx-swap="outerHTML"
+        class="btn btn-ghost btn-sm">Edit</button>
+      <button
+        hx-delete="/profile/projects/{{ project.id }}"
+        hx-target="#project-{{ project.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Delete this project?"
+        class="btn btn-ghost btn-sm text-red-500">Delete</button>
+    </div>
+  </div>
+</div>
+{% if oob_clear_project_form is defined and oob_clear_project_form %}
+<div id="project-add-form" hx-swap-oob="true"></div>
+{% endif %}

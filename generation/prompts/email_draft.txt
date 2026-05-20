@@ -1,0 +1,14 @@
+Draft a professional application email for the following job.
+
+The email should:
+- Have a clear, specific subject line
+- Be concise (3-5 sentences in the body)
+- Reference the attached resume and cover letter
+- Match the language of the job posting ({language})
+
+Return JSON with fields: subject, body
+
+JOB TITLE: {job_title}
+COMPANY: {company}
+CONTACT EMAIL: {contact_email}
+FROM NAME: {from_name}
