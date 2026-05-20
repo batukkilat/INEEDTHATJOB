@@ -6,9 +6,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # LLM
-    openai_api_key: str = ""
-    scoring_model: str = "gpt-4o-mini"
-    generation_model: str = "gpt-4o"
+    anthropic_api_key: str = ""
+    scoring_model: str = "claude-haiku-4-5-20251001"   # bulk work: fast + cheap
+    generation_model: str = "claude-sonnet-4-6"         # quality work: resumes, cover letters
 
     # Scraping
     scrape_platforms: str = '["linkedin", "glints", "jobstreet"]'

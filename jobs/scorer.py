@@ -56,22 +56,39 @@ def _total_experience_years(experiences: list[Experience]) -> float:
     return total_months / 12
 
 
+_JOB_PARSER_TOOL = {
+    "description": "Extract structured requirements from a job posting",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "required_skills":       {"type": "array", "items": {"type": "string"}},
+            "preferred_skills":      {"type": "array", "items": {"type": "string"}},
+            "years_experience_min":  {"type": "number"},
+            "years_experience_max":  {"type": "number"},
+            "education_level":       {"type": "string"},
+            "languages":             {"type": "array", "items": {"type": "string"}},
+            "experience_level":      {"type": "string", "enum": ["junior", "mid", "senior", "lead"]},
+        },
+        "required": ["required_skills", "preferred_skills", "languages"],
+    },
+}
+
+
 def _parse_requirements(description: str) -> ParsedRequirements:
-    from utils.llm import get_client
-    client = get_client()
+    from utils.llm import chat_with_tool
     prompt_tmpl = Path("generation/prompts/job_parser.txt").read_text()
     prompt = prompt_tmpl.replace("{job_description}", description[:4000])
 
     try:
-        response = client.beta.chat.completions.parse(
+        result = chat_with_tool(
             model=settings.scoring_model,
             messages=[{"role": "user", "content": prompt}],
-            response_format=ParsedRequirements,
-            temperature=0,
+            tool_name="extract_requirements",
+            tool_schema=_JOB_PARSER_TOOL,
         )
-        result = response.choices[0].message.parsed
-        log.debug("requirements_parsed", skills=len(result.required_skills))
-        return result
+        parsed = ParsedRequirements(**result)
+        log.debug("requirements_parsed", skills=len(parsed.required_skills))
+        return parsed
     except Exception as e:
         log.warning("requirements_parse_failed", error=str(e))
         return ParsedRequirements()
