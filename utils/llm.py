@@ -1,48 +1,73 @@
-import anthropic
+import json
+import httpx
 from config import settings
 from utils.logging import get_logger
 
 log = get_logger(__name__)
 
-_client: anthropic.Anthropic | None = None
-
-
-def get_client() -> anthropic.Anthropic:
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    return _client
+OLLAMA_BASE = "http://127.0.0.1:11434/api"
 
 
 def chat(model: str, messages: list[dict], system: str = "", max_tokens: int = 2048, **kwargs) -> str:
-    """Simple text completion."""
-    client = get_client()
-    kwargs_full = dict(model=model, messages=messages, max_tokens=max_tokens, **kwargs)
+    """Simple text completion via Ollama."""
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "options": {"num_predict": max_tokens},
+    }
     if system:
-        kwargs_full["system"] = system
-    response = client.messages.create(**kwargs_full)
-    log.info("llm_call", model=model, input_tokens=response.usage.input_tokens, output_tokens=response.usage.output_tokens)
-    return response.content[0].text
+        payload["system"] = system
+
+    r = httpx.post(f"{OLLAMA_BASE}/chat", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    content = data["message"]["content"]
+    log.info("llm_call", model=model, tokens=data.get("eval_count"))
+    return content
 
 
 def chat_with_tool(model: str, messages: list[dict], tool_name: str, tool_schema: dict,
-                   system: str = "", max_tokens: int = 1024) -> dict:
-    """Structured extraction via forced tool use. Returns the tool input dict."""
-    client = get_client()
-    tool = {"name": tool_name, "description": tool_schema.get("description", ""), "input_schema": tool_schema["input_schema"]}
-    kwargs: dict = dict(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        tools=[tool],
-        tool_choice={"type": "tool", "name": tool_name},
-    )
+                   system: str = "", max_tokens: int = 2048) -> dict:
+    """Structured extraction via Ollama tool calling. Returns the tool input dict."""
+    tool = {
+        "type": "function",
+        "function": {
+            "name": tool_name,
+            "description": tool_schema.get("description", ""),
+            "parameters": tool_schema["input_schema"],
+        },
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "tools": [tool],
+        "stream": False,
+        "options": {"num_predict": max_tokens},
+    }
     if system:
-        kwargs["system"] = system
-    response = client.messages.create(**kwargs)
-    log.info("llm_tool_call", model=model, tool=tool_name,
-             input_tokens=response.usage.input_tokens, output_tokens=response.usage.output_tokens)
-    for block in response.content:
-        if block.type == "tool_use" and block.name == tool_name:
-            return block.input
+        payload["system"] = system
+
+    r = httpx.post(f"{OLLAMA_BASE}/chat", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    log.info("llm_tool_call", model=model, tool=tool_name, tokens=data.get("eval_count"))
+
+    # Extract tool call result
+    msg = data.get("message", {})
+    tool_calls = msg.get("tool_calls", [])
+    if tool_calls:
+        return tool_calls[0].get("function", {}).get("arguments", {})
+
+    # Fallback: try to parse JSON from the text response
+    text = msg.get("content", "")
+    try:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start != -1 and end > start:
+            return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        pass
+
+    log.warning("tool_call_parse_failed", response=text[:200])
     return {}

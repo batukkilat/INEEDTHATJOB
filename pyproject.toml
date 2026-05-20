@@ -14,7 +14,6 @@ dependencies = [
     "sqlmodel>=0.0.21",
     "alembic>=1.13",
     "pydantic-settings>=2.3",
-    "anthropic>=0.40",
     "apscheduler>=3.10",
     "python-docx>=1.1",
     "weasyprint>=62.3",
