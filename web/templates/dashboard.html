@@ -10,31 +10,57 @@
     {% include "partials/stats.html" %}
   </div>
 
-  <!-- Quick actions -->
+  <!-- Pipeline -->
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Pipeline</h2>
-    <div class="flex gap-3">
-      <button class="btn btn-primary" disabled title="Coming in Phase 2">
-        Run Pipeline Now
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Pipeline</h2>
+    {% if last_run %}
+    <p class="text-xs text-gray-400 mb-3">Last run: {{ last_run[:16] | replace("T", " ") }} UTC</p>
+    {% else %}
+    <p class="text-xs text-gray-400 mb-3">Never run</p>
+    {% endif %}
+    <div class="flex items-center gap-4">
+      <button
+        hx-post="/api/pipeline/run"
+        hx-target="#pipeline-status"
+        hx-swap="outerHTML"
+        hx-indicator="#pipeline-btn-spinner"
+        class="btn btn-primary">
+        ▶ Run Pipeline Now
       </button>
-      <span class="text-sm text-gray-400 self-center">Scraping not yet configured — complete Phase 2 first.</span>
+      <svg id="pipeline-btn-spinner" class="htmx-indicator w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+      <div id="pipeline-status" class="text-sm text-gray-400">
+        {% if is_pipeline_running %}
+        <span hx-get="/api/pipeline/status" hx-trigger="every 5s" hx-swap="outerHTML">⏳ Running…</span>
+        {% endif %}
+      </div>
     </div>
+    <p class="text-xs text-gray-400 mt-2">
+      Scrapes LinkedIn Indonesia → scores compatibility → queues for review.
+      Set target roles in <a href="/settings" class="underline">Settings</a> first.
+    </p>
   </div>
 
   <!-- Activity feed -->
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Activity</h2>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h2>
+      <a href="/jobs" class="text-xs text-blue-500 hover:underline">View all jobs →</a>
+    </div>
     {% if recent_activity %}
       <ul class="space-y-2">
         {% for log in recent_activity %}
         <li class="flex items-start gap-3 text-sm">
-          <span class="text-gray-400 whitespace-nowrap">{{ log.timestamp[:16] }}</span>
-          <span class="badge
-            {% if log.action == 'submitted' %}badge-green
-            {% elif log.action == 'failed' %}badge-red
-            {% elif log.action == 'approved' %}badge-blue
+          <span class="text-gray-400 whitespace-nowrap font-mono text-xs mt-0.5">{{ log.timestamp[:16] | replace("T", " ") }}</span>
+          <span class="badge flex-shrink-0
+            {% if log.action in ['submitted', 'pipeline_complete'] %}badge-green
+            {% elif log.action in ['failed'] %}badge-red
+            {% elif log.action in ['approved', 'scored'] %}badge-blue
+            {% elif log.action in ['scraped'] %}badge-yellow
             {% else %}badge-gray{% endif %}">{{ log.action }}</span>
-          <span class="text-gray-700">{{ log.details or '' }}</span>
+          <span class="text-gray-600">{{ log.details or '' }}</span>
         </li>
         {% endfor %}
       </ul>

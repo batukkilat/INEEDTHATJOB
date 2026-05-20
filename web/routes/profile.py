@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from web.templates_env import templates
 from sqlmodel import Session
 from db.database import get_session
 from db.models import Skill, Experience, Achievement, Education, Certification, Project
 import profile.service as svc
 
 router = APIRouter()
-templates = Jinja2Templates(directory="web/templates")
+
 
 T = "web/templates"
 

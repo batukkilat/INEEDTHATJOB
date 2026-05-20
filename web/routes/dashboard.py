@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from web.templates_env import templates
 from sqlmodel import Session, select, func
 from db.database import get_session
 from db.models import Job, Application, ActivityLog
+import pipeline as pipe
 
 router = APIRouter()
-templates = Jinja2Templates(directory="web/templates")
+
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -21,10 +22,19 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
     recent_activity = list(
         session.exec(select(ActivityLog).order_by(ActivityLog.timestamp.desc()).limit(20)).all()
     )
+    # Last successful pipeline run
+    last_run_log = session.exec(
+        select(ActivityLog)
+        .where(ActivityLog.action == "pipeline_complete")
+        .order_by(ActivityLog.timestamp.desc())
+    ).first()
+
     return templates.TemplateResponse(request, "dashboard.html", {
         "current_page": "dashboard",
         "total_jobs": total_jobs,
         "pending_review": pending_review,
         "applied": applied,
         "recent_activity": recent_activity,
+        "last_run": last_run_log.timestamp if last_run_log else None,
+        "is_pipeline_running": pipe.is_running(),
     })

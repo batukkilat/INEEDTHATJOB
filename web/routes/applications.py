@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from web.templates_env import templates
 from sqlmodel import Session, select
 from db.database import get_session
 from db.models import Application, Job
 
 router = APIRouter()
-templates = Jinja2Templates(directory="web/templates")
+
 
 
 @router.get("/review", response_class=HTMLResponse)

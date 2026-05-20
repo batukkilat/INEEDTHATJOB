@@ -11,22 +11,18 @@
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-xl font-bold text-gray-900">{{ job.title }}</h1>
-        <p class="text-gray-600 mt-1">{{ job.company }}{% if job.location %} &middot; {{ job.location }}{% endif %}</p>
+        <p class="text-gray-600 mt-1">{{ job.company }}
+          {% if job.location %} &middot; {{ job.location }}{% endif %}
+          {% if job.remote_type %} &middot;
+            <span class="{% if job.remote_type == 'remote' %}text-green-600{% else %}text-blue-500{% endif %}">{{ job.remote_type }}</span>
+          {% endif %}
+        </p>
       </div>
       <div class="flex gap-2 items-center">
         <span class="badge badge-gray">{{ job.platform }}</span>
-        <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status == 'review_ready' %}badge-blue{% else %}badge-gray{% endif %}">{{ job.status }}</span>
+        <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status == 'review_ready' %}badge-blue{% elif job.status == 'scored' %}badge-yellow{% else %}badge-gray{% endif %}">{{ job.status }}</span>
       </div>
     </div>
-
-    {% if job.compatibility_score is not none %}
-    <div class="mt-4 p-3 bg-gray-50 rounded-md">
-      <span class="text-sm font-medium text-gray-700">Compatibility Score: </span>
-      <span class="text-lg font-bold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.4 %}text-yellow-600{% else %}text-red-500{% endif %}">
-        {{ (job.compatibility_score * 100) | int }}%
-      </span>
-    </div>
-    {% endif %}
 
     {% if job.salary_min or job.salary_max %}
     <p class="mt-3 text-sm text-gray-600">
@@ -39,14 +35,57 @@
     {% endif %}
 
     <div class="mt-4 flex gap-2">
-      <a href="{{ job.url }}" target="_blank" class="btn btn-secondary btn-sm">View Original</a>
+      <a href="{{ job.url }}" target="_blank" class="btn btn-secondary btn-sm">View on LinkedIn ↗</a>
     </div>
   </div>
 
+  <!-- Score breakdown -->
+  {% if job.compatibility_score is not none %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Compatibility Score</h2>
+      <span class="text-2xl font-bold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-600{% else %}text-red-400{% endif %}">
+        {{ (job.compatibility_score * 100) | int }}%
+      </span>
+    </div>
+    {% if job.score_breakdown %}
+    {% set breakdown = job.score_breakdown | tojson | fromjson if job.score_breakdown is string else job.score_breakdown %}
+    <div class="space-y-2">
+      {% set score_labels = {
+        'skill_match': 'Skill Match',
+        'experience_match': 'Experience',
+        'title_relevance': 'Title Relevance',
+        'location_match': 'Location',
+        'language_match': 'Language',
+        'salary_match': 'Salary'
+      } %}
+      {% for key, label in score_labels.items() %}
+        {% if key in breakdown %}
+        {% set val = breakdown[key] %}
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-gray-500 w-32 flex-shrink-0">{{ label }}</span>
+          <div class="flex-1 bg-gray-100 rounded-full h-2">
+            <div class="h-2 rounded-full {% if val >= 0.7 %}bg-green-400{% elif val >= 0.45 %}bg-yellow-400{% else %}bg-red-300{% endif %}"
+                 style="width: {{ (val * 100) | int }}%"></div>
+          </div>
+          <span class="text-xs text-gray-600 w-8 text-right">{{ (val * 100) | int }}%</span>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Job description -->
   {% if job.description %}
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Job Description</h2>
     <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ job.description }}</div>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center text-sm text-gray-400">
+    Description not fetched yet. Run the pipeline to retrieve it.
   </div>
   {% endif %}
 </div>

@@ -3,10 +3,29 @@
 
 {% block content %}
 <div class="max-w-5xl">
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold text-gray-900">Jobs</h1>
     <span class="text-sm text-gray-400">{{ jobs | length }} listings</span>
   </div>
+
+  <!-- Filters -->
+  <form method="get" class="flex gap-3 mb-4 text-sm">
+    <select name="status" class="border border-gray-200 rounded px-2 py-1 text-sm bg-white" onchange="this.form.submit()">
+      <option value="">All statuses</option>
+      {% for s in ['new', 'scored', 'generating', 'review_ready', 'applied', 'skipped', 'failed'] %}
+      <option value="{{ s }}" {% if filter_status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="platform" class="border border-gray-200 rounded px-2 py-1 text-sm bg-white" onchange="this.form.submit()">
+      <option value="">All platforms</option>
+      {% for p in ['linkedin', 'glints', 'jobstreet'] %}
+      <option value="{{ p }}" {% if filter_platform == p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    {% if filter_status or filter_platform %}
+    <a href="/jobs" class="btn btn-ghost btn-sm self-center">Clear</a>
+    {% endif %}
+  </form>
 
   {% if jobs %}
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -15,10 +34,11 @@
         <tr>
           <th class="px-4 py-3 text-left font-medium text-gray-500">Title</th>
           <th class="px-4 py-3 text-left font-medium text-gray-500">Company</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Location</th>
           <th class="px-4 py-3 text-left font-medium text-gray-500">Platform</th>
           <th class="px-4 py-3 text-left font-medium text-gray-500">Score</th>
           <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-          <th class="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500">Scraped</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -26,12 +46,13 @@
         <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/jobs/{{ job.id }}'">
           <td class="px-4 py-3 font-medium text-gray-900">{{ job.title }}</td>
           <td class="px-4 py-3 text-gray-600">{{ job.company }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ job.location or '—' }}</td>
           <td class="px-4 py-3">
             <span class="badge badge-gray">{{ job.platform }}</span>
           </td>
           <td class="px-4 py-3">
             {% if job.compatibility_score is not none %}
-              <span class="font-semibold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.4 %}text-yellow-600{% else %}text-red-500{% endif %}">
+              <span class="font-semibold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-600{% else %}text-red-400{% endif %}">
                 {{ (job.compatibility_score * 100) | int }}%
               </span>
             {% else %}
@@ -39,11 +60,11 @@
             {% endif %}
           </td>
           <td class="px-4 py-3">
-            <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status == 'review_ready' %}badge-blue{% elif job.status == 'new' %}badge-gray{% else %}badge-yellow{% endif %}">
+            <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status in ['review_ready', 'approved'] %}badge-blue{% elif job.status == 'scored' %}badge-yellow{% elif job.status == 'failed' %}badge-red{% else %}badge-gray{% endif %}">
               {{ job.status }}
             </span>
           </td>
-          <td class="px-4 py-3 text-gray-400">{{ job.scraped_at[:10] if job.scraped_at else '' }}</td>
+          <td class="px-4 py-3 text-gray-400 text-xs">{{ job.scraped_at[:10] if job.scraped_at else '' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -51,7 +72,8 @@
   </div>
   {% else %}
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-    <p class="text-gray-400 text-sm">No jobs yet. Run the pipeline to scrape listings.</p>
+    <p class="text-gray-400 text-sm mb-3">No jobs yet.</p>
+    <a href="/" class="btn btn-primary btn-sm">Run Pipeline</a>
   </div>
   {% endif %}
 </div>
