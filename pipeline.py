@@ -17,6 +17,8 @@ from jobs.service import upsert_job
 from utils.logging import get_logger
 
 MIN_SCORE_TO_GENERATE = 0.55
+# Seconds between LLM calls to keep ~7.6k tokens/job under Groq free-tier 6000 TPM.
+GEN_CALL_DELAY = 25
 
 log = get_logger(__name__)
 
@@ -163,8 +165,11 @@ async def _generate_phase(session: Session) -> int:
             session.add(job)
             session.commit()
 
+            # Space the 3 calls so the rolling Groq TPM window drains between them.
             docx_path, resume_content = await generate_resume(job, session, profile)
+            await asyncio.sleep(GEN_CALL_DELAY)
             cover_letter = await generate_cover_letter(job, session, profile)
+            await asyncio.sleep(GEN_CALL_DELAY)
             email_subject, email_body = await compose_email(job, session, profile)
 
             app = Application(
@@ -184,7 +189,7 @@ async def _generate_phase(session: Session) -> int:
             _log_activity(session, "generated", job_id=job.id,
                           details=f"{job.title} @ {job.company}")
             generated += 1
-            await asyncio.sleep(8)  # 3 calls/job × 8s = ~22 jobs/min, under Groq 30 RPM
+            await asyncio.sleep(GEN_CALL_DELAY)
         except Exception as e:
             log.error("generate_failed", job_id=job.id, error=str(e))
             job.status = "scored"
