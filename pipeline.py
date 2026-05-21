@@ -8,16 +8,14 @@ from config import settings
 from db.database import engine
 from db.models import Job, Application, ActivityLog, Preferences
 from generation.resume import generate_resume
-from generation.cover_letter import generate_cover_letter
-from generation.email_composer import compose_email
-from jobs.scrapers.linkedin import LinkedInScraper
 from generation.common import build_profile_json
+from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scorer import score_job, title_matches_roles
 from jobs.service import upsert_job
 from utils.logging import get_logger
 
 MIN_SCORE_TO_GENERATE = 0.55
-# Seconds between LLM calls to keep ~7.6k tokens/job under Groq free-tier 6000 TPM.
+# Seconds between per-job resume calls to stay under Groq free-tier 6000 TPM.
 GEN_CALL_DELAY = 25
 
 log = get_logger(__name__)
@@ -165,20 +163,14 @@ async def _generate_phase(session: Session) -> int:
             session.add(job)
             session.commit()
 
-            # Space the 3 calls so the rolling Groq TPM window drains between them.
+            # Only the resume is generated here. Cover letter + email are generated
+            # on demand from the review page to save tokens on jobs the user skips.
             docx_path, resume_content = await generate_resume(job, session, profile)
-            await asyncio.sleep(GEN_CALL_DELAY)
-            cover_letter = await generate_cover_letter(job, session, profile)
-            await asyncio.sleep(GEN_CALL_DELAY)
-            email_subject, email_body = await compose_email(job, session, profile)
 
             app = Application(
                 job_id=job.id,
                 resume_path=docx_path,
                 resume_content=json.dumps(resume_content),
-                cover_letter=cover_letter,
-                email_subject=email_subject,
-                email_body=email_body,
                 apply_status="pending_review",
                 created_at=_now(),
             )

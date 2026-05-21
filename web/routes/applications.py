@@ -4,6 +4,8 @@ from web.templates_env import templates
 from sqlmodel import Session, select
 from db.database import get_session
 from db.models import Application, Job
+from generation.cover_letter import generate_cover_letter
+from generation.email_composer import compose_email
 
 router = APIRouter()
 
@@ -41,6 +43,32 @@ def reject_application(app_id: int, session: Session = Depends(get_session)):
         session.add(app)
         session.commit()
     return HTMLResponse("")
+
+
+@router.post("/review/{app_id}/generate-cover-letter", response_class=HTMLResponse)
+async def generate_cover_letter_route(app_id: int, request: Request,
+                                      session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Application not found", status_code=404)
+    job = session.get(Job, app.job_id)
+    app.cover_letter = await generate_cover_letter(job, session)
+    session.add(app)
+    session.commit()
+    return templates.TemplateResponse(request, "partials/cover_letter_block.html", {"app": app})
+
+
+@router.post("/review/{app_id}/generate-email", response_class=HTMLResponse)
+async def generate_email_route(app_id: int, request: Request,
+                               session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Application not found", status_code=404)
+    job = session.get(Job, app.job_id)
+    app.email_subject, app.email_body = await compose_email(job, session)
+    session.add(app)
+    session.commit()
+    return templates.TemplateResponse(request, "partials/email_block.html", {"app": app})
 
 
 @router.put("/review/{app_id}/cover-letter", response_class=HTMLResponse)
