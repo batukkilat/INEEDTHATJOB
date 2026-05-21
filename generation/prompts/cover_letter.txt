@@ -8,6 +8,7 @@ Structure (3 paragraphs, no headers):
 Hard rules:
 - Never use: "I am writing to", "I am excited to", "passion for", "team player", "fast learner", "dynamic", "synergy"
 - Every claim must come from the profile data. No invented experience.
+- CRITICAL: Do NOT invent numbers. Never state a percentage, statistic, duration, or metric unless it appears VERBATIM in the profile's achievements/metrics. If an achievement has no metric in the profile, describe it qualitatively — do not estimate, round, or fabricate a figure.
 - No filler. Cut any sentence that could appear in any other cover letter.
 - Match the language of the job posting ({language}).
 - Tone: direct and confident. Adapt formality to company type ({company_type}).

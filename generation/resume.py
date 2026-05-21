@@ -53,6 +53,18 @@ _TAILOR_TOOL = {
                     "required": ["institution", "degree", "end_date"],
                 },
             },
+            "certifications": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name":   {"type": "string"},
+                        "issuer": {"type": "string"},
+                        "date":   {"type": "string"},
+                    },
+                    "required": ["name"],
+                },
+            },
             "projects": {
                 "type": "array",
                 "items": {
@@ -60,6 +72,7 @@ _TAILOR_TOOL = {
                     "properties": {
                         "name":        {"type": "string"},
                         "description": {"type": "string"},
+                        "bullets":     {"type": "array", "items": {"type": "string"}},
                     },
                 },
             },
@@ -77,7 +90,7 @@ def tailor_resume(job, session: Session, profile: dict | None = None) -> dict:
               .replace("{job_title}", job.title)
               .replace("{company}", job.company)
               .replace("{job_description}", (job.description or job.title)[:3000])
-              .replace("{profile_json}", json.dumps(profile, ensure_ascii=False)[:3000]))
+              .replace("{profile_json}", json.dumps(profile, ensure_ascii=False)[:6000]))
 
     log.info("resume_tailor_start", job_id=job.id)
     result = chat_with_tool(
@@ -85,7 +98,7 @@ def tailor_resume(job, session: Session, profile: dict | None = None) -> dict:
         messages=[{"role": "user", "content": prompt}],
         tool_name="tailor_resume",
         tool_schema=_TAILOR_TOOL,
-        max_tokens=2048,
+        max_tokens=3000,
     )
     log.info("resume_tailor_done", job_id=job.id,
              experiences=len(result.get("experiences", [])))
@@ -192,6 +205,17 @@ def generate_docx(content: dict, job_id: int) -> str:
                 dr = p.add_run(f"\t{_fmt_date(edu.get('start_date'))} – {_fmt_date(edu.get('end_date'))}")
                 dr.font.size = Pt(9)
 
+    # Certifications
+    if content.get("certifications"):
+        _section_header(doc, "Certifications")
+        for cert in content["certifications"]:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(2)
+            p.add_run(cert.get("name", "")).bold = True
+            meta = " | ".join(filter(None, [cert.get("issuer"), cert.get("date")]))
+            if meta:
+                p.add_run(f"  ({meta})").font.size = Pt(9)
+
     # Projects
     if content.get("projects"):
         _section_header(doc, "Projects")
@@ -201,6 +225,11 @@ def generate_docx(content: dict, job_id: int) -> str:
             p.add_run(proj.get("name", "")).bold = True
             if proj.get("description"):
                 p.add_run(f" – {proj['description']}")
+            for bullet in proj.get("bullets", []):
+                bp = doc.add_paragraph(style="List Bullet")
+                bp.paragraph_format.space_after = Pt(1)
+                bp.paragraph_format.left_indent = Inches(0.2)
+                bp.add_run(bullet).font.size = Pt(10)
 
     doc.save(out_path)
     log.info("resume_docx_saved", path=out_path)

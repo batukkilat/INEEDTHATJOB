@@ -37,15 +37,21 @@ def _post(payload: dict, max_retries: int = 4) -> dict:
             time.sleep(wait)
             delay = min(delay * 2, 60)
             continue
+        # Groq returns 400 tool_use_failed when a weak model emits a malformed tool call;
+        # the usable generation is in error.failed_generation — return it for the caller to salvage.
+        if r.status_code == 400 and r.json().get("error", {}).get("code") == "tool_use_failed":
+            return r.json()
         r.raise_for_status()
         return r.json()
     r.raise_for_status()
     return r.json()
 
 
-def chat(model: str, messages: list[dict], system: str = "", max_tokens: int = 2048, **kwargs) -> str:
+def chat(model: str, messages: list[dict], system: str = "", max_tokens: int = 2048,
+         temperature: float = 1.0, **kwargs) -> str:
     msgs = ([{"role": "system", "content": system}] if system else []) + messages
-    data = _post({"model": model, "messages": msgs, "max_tokens": max_tokens})
+    data = _post({"model": model, "messages": msgs, "max_tokens": max_tokens,
+                  "temperature": temperature})
     content = data["choices"][0]["message"]["content"]
     log.info("llm_call", model=model, tokens=data.get("usage", {}).get("completion_tokens"))
     return content
@@ -70,6 +76,17 @@ def chat_with_tool(model: str, messages: list[dict], tool_name: str, tool_schema
         "max_tokens": max_tokens,
     }
     data = _post(payload)
+
+    # Salvage a malformed tool call (Groq 400 tool_use_failed): JSON is in failed_generation.
+    if "error" in data:
+        failed = data["error"].get("failed_generation", "")
+        parsed = extract_json(failed)
+        if parsed is not None:
+            log.info("llm_tool_call_salvaged", model=model, tool=tool_name)
+            return parsed
+        log.warning("tool_call_parse_failed", response=failed[:200])
+        return {}
+
     log.info("llm_tool_call", model=model, tool=tool_name, tokens=data.get("usage", {}).get("completion_tokens"))
 
     msg = data["choices"][0]["message"]

@@ -2,7 +2,7 @@
 from sqlmodel import Session
 
 from config import settings
-from generation.common import build_profile_json, detect_language, load_prompt
+from generation.common import build_profile_json, detect_language, load_prompt, strip_preamble
 from utils.llm import chat, extract_json
 from utils.logging import get_logger
 
@@ -41,11 +41,11 @@ async def compose_email(job, session: Session, profile: dict | None = None) -> t
     )
 
     subject = f"Application – {job.title}"
-    body = text
+    body = strip_preamble(text)
     data = extract_json(text)
     if data:
         subject = data.get("subject", subject)
-        body = data.get("body", text)
+        body = strip_preamble(data.get("body", body))
 
     log.info("email_compose_done", job_id=job.id)
     return subject, body

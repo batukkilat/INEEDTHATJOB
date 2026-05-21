@@ -1,20 +1,35 @@
 """Phase 3: cover letter generation (English + Indonesian)."""
 import json
+import re
 
 from sqlmodel import Session
 
 from config import settings
-from generation.common import build_profile_json, company_type, detect_language, load_prompt
+from generation.common import build_profile_json, company_type, detect_language, load_prompt, strip_preamble
 from utils.llm import chat
 from utils.logging import get_logger
 
 log = get_logger(__name__)
+
+# Percentages and multi-digit quantities are the figures models most often fabricate.
+_NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)?%|\b\d{2,}\b")
+
+
+def _fabricated_numbers(text: str, profile_text: str) -> list[str]:
+    """Return numeric figures in the letter that do not appear in the profile data."""
+    bad = []
+    for fig in _NUMBER_RE.findall(text):
+        norm = fig.rstrip("%").replace(",", "")
+        if fig not in profile_text and norm not in profile_text:
+            bad.append(fig)
+    return bad
 
 
 async def generate_cover_letter(job, session: Session, profile: dict | None = None) -> str:
     prompt_tmpl = load_prompt("cover_letter.txt")
     if profile is None:
         profile = build_profile_json(session)
+    profile_text = json.dumps(profile, ensure_ascii=False)
     language = detect_language(job.description or job.title)
 
     from_name = settings.from_name or ""
@@ -25,16 +40,33 @@ async def generate_cover_letter(job, session: Session, profile: dict | None = No
               .replace("{job_title}", job.title)
               .replace("{company}", job.company)
               .replace("{job_description}", (job.description or job.title)[:2500])
-              .replace("{profile_json}", json.dumps(profile, ensure_ascii=False)[:2500])
+              .replace("{profile_json}", profile_text[:2500])
               .replace("{language}", language)
               .replace("{company_type}", company_type(job.company))
               .replace("{from_name}", from_name))
 
     log.info("cover_letter_start", job_id=job.id, language=language)
-    result = chat(
-        model=settings.generation_model,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=1024,
-    )
+    # Low temperature + a retry that names the offending figures keeps a weak model from inventing metrics.
+    letter = ""
+    for attempt in range(2):
+        msg = prompt
+        if attempt > 0:
+            msg = prompt + (
+                f"\n\nYour previous draft included these figures that are NOT in the profile: "
+                f"{', '.join(fabricated)}. Rewrite without any invented numbers — describe those "
+                f"achievements qualitatively instead."
+            )
+        result = chat(
+            model=settings.generation_model,
+            messages=[{"role": "user", "content": msg}],
+            max_tokens=1024,
+            temperature=0.2,
+        )
+        letter = strip_preamble(result)
+        fabricated = _fabricated_numbers(letter, profile_text)
+        if not fabricated:
+            break
+        log.warning("cover_letter_fabricated_numbers", job_id=job.id, figures=fabricated, attempt=attempt + 1)
+
     log.info("cover_letter_done", job_id=job.id)
-    return result.strip()
+    return letter
