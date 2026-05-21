@@ -30,11 +30,19 @@
   <section id="skills" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-gray-800">Skills</h2>
-      <button
-        hx-get="/profile/skills/new"
-        hx-target="#skill-add-form"
-        hx-swap="innerHTML"
-        class="btn btn-secondary btn-sm">+ Add Skill</button>
+      <div class="flex gap-2">
+        <button
+          hx-get="/profile/skills/new"
+          hx-target="#skill-add-form"
+          hx-swap="innerHTML"
+          class="btn btn-secondary btn-sm">+ Add Skill</button>
+        <button
+          hx-delete="/profile/skills"
+          hx-target="#skills-tbody"
+          hx-swap="innerHTML"
+          hx-confirm="Clear all skills? This cannot be undone."
+          class="btn btn-sm text-red-600 border border-red-200 hover:bg-red-50">Clear all</button>
+      </div>
     </div>
     <div id="skill-add-form" class="mb-3"></div>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -65,11 +73,19 @@
   <section id="experience" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-gray-800">Experience</h2>
-      <button
-        hx-get="/profile/experiences/new"
-        hx-target="#experience-add-form"
-        hx-swap="innerHTML"
-        class="btn btn-secondary btn-sm">+ Add Experience</button>
+      <div class="flex gap-2">
+        <button
+          hx-get="/profile/experiences/new"
+          hx-target="#experience-add-form"
+          hx-swap="innerHTML"
+          class="btn btn-secondary btn-sm">+ Add Experience</button>
+        <button
+          hx-delete="/profile/experiences"
+          hx-target="#experiences-list"
+          hx-swap="innerHTML"
+          hx-confirm="Clear all experience? This cannot be undone."
+          class="btn btn-sm text-red-600 border border-red-200 hover:bg-red-50">Clear all</button>
+      </div>
     </div>
     <div id="experience-add-form" class="mb-3"></div>
     <div id="experiences-list" class="space-y-4">
@@ -86,11 +102,19 @@
   <section id="education" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-gray-800">Education</h2>
-      <button
-        hx-get="/profile/education/new"
-        hx-target="#education-add-form"
-        hx-swap="innerHTML"
-        class="btn btn-secondary btn-sm">+ Add Education</button>
+      <div class="flex gap-2">
+        <button
+          hx-get="/profile/education/new"
+          hx-target="#education-add-form"
+          hx-swap="innerHTML"
+          class="btn btn-secondary btn-sm">+ Add Education</button>
+        <button
+          hx-delete="/profile/education"
+          hx-target="#education-tbody"
+          hx-swap="innerHTML"
+          hx-confirm="Clear all education? This cannot be undone."
+          class="btn btn-sm text-red-600 border border-red-200 hover:bg-red-50">Clear all</button>
+      </div>
     </div>
     <div id="education-add-form" class="mb-3"></div>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -121,11 +145,19 @@
   <section id="certifications" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-gray-800">Certifications</h2>
-      <button
-        hx-get="/profile/certifications/new"
-        hx-target="#cert-add-form"
-        hx-swap="innerHTML"
-        class="btn btn-secondary btn-sm">+ Add Certification</button>
+      <div class="flex gap-2">
+        <button
+          hx-get="/profile/certifications/new"
+          hx-target="#cert-add-form"
+          hx-swap="innerHTML"
+          class="btn btn-secondary btn-sm">+ Add Certification</button>
+        <button
+          hx-delete="/profile/certifications"
+          hx-target="#certs-tbody"
+          hx-swap="innerHTML"
+          hx-confirm="Clear all certifications? This cannot be undone."
+          class="btn btn-sm text-red-600 border border-red-200 hover:bg-red-50">Clear all</button>
+      </div>
     </div>
     <div id="cert-add-form" class="mb-3"></div>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -155,11 +187,19 @@
   <section id="projects" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-lg font-semibold text-gray-800">Projects</h2>
-      <button
-        hx-get="/profile/projects/new"
-        hx-target="#project-add-form"
-        hx-swap="innerHTML"
-        class="btn btn-secondary btn-sm">+ Add Project</button>
+      <div class="flex gap-2">
+        <button
+          hx-get="/profile/projects/new"
+          hx-target="#project-add-form"
+          hx-swap="innerHTML"
+          class="btn btn-secondary btn-sm">+ Add Project</button>
+        <button
+          hx-delete="/profile/projects"
+          hx-target="#projects-list"
+          hx-swap="innerHTML"
+          hx-confirm="Clear all projects? This cannot be undone."
+          class="btn btn-sm text-red-600 border border-red-200 hover:bg-red-50">Clear all</button>
+      </div>
     </div>
     <div id="project-add-form" class="mb-3"></div>
     <div id="projects-list" class="space-y-3">

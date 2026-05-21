@@ -3,9 +3,8 @@ from pathlib import Path
 
 from sqlmodel import Session, select
 
-from config import settings
 from db.models import Skill, Experience, Achievement, Education, Certification, Project
-from utils.llm import chat_with_tool
+from profile.resume_parser import parse_resume_text
 from utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -135,17 +134,8 @@ def _extract_docx(content: bytes) -> str:
 
 
 def parse_resume(text: str) -> dict:
-    prompt_tmpl = Path("generation/prompts/resume_parser.txt").read_text()
-    prompt = prompt_tmpl.replace("{resume_text}", text[:12000])  # ~3k tokens max
-
     log.info("resume_parse_start", chars=len(text))
-    result = chat_with_tool(
-        model=settings.generation_model,
-        messages=[{"role": "user", "content": prompt}],
-        tool_name="extract_profile",
-        tool_schema=_RESUME_PARSER_TOOL,
-        max_tokens=4096,
-    )
+    result = parse_resume_text(text)
     log.info("resume_parse_done",
              skills=len(result.get("skills", [])),
              experiences=len(result.get("experiences", [])))

@@ -11,25 +11,41 @@
 
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Job Preferences</h2>
-    <form method="post" action="/settings/preferences" class="space-y-4">
+    <form method="post" action="/settings/preferences" class="space-y-5" id="prefs-form">
+
+      <!-- Target Roles -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Target Roles <span class="text-gray-400 font-normal">(JSON array, e.g. ["Backend Engineer"])</span></label>
-        <input type="text" name="target_roles" value="{{ prefs.target_roles or '' }}">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Target Roles</label>
+        <div class="tag-input-widget" data-field="target_roles" data-initial="{{ prefs.target_roles or '[]' }}"></div>
+        <input type="hidden" name="target_roles" id="target_roles_hidden">
       </div>
+
+      <!-- Target Locations -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Target Locations <span class="text-gray-400 font-normal">(JSON array)</span></label>
-        <input type="text" name="target_locations" value="{{ prefs.target_locations or '' }}">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Target Locations</label>
+        <div class="tag-input-widget" data-field="target_locations" data-initial="{{ prefs.target_locations or '[]' }}"></div>
+        <input type="hidden" name="target_locations" id="target_locations_hidden">
       </div>
+
+      <!-- Preferred Languages -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Languages</label>
+        <div class="tag-input-widget" data-field="preferred_languages" data-initial="{{ prefs.preferred_languages or '[]' }}"></div>
+        <input type="hidden" name="preferred_languages" id="preferred_languages_hidden">
+      </div>
+
+      <!-- Salary -->
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Min Salary (monthly)</label>
-          <input type="number" name="min_salary" value="{{ prefs.min_salary or '' }}">
+          <input type="number" name="min_salary" value="{{ prefs.min_salary or '' }}" placeholder="e.g. 10000000">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Max Salary (monthly)</label>
-          <input type="number" name="max_salary" value="{{ prefs.max_salary or '' }}">
+          <input type="number" name="max_salary" value="{{ prefs.max_salary or '' }}" placeholder="e.g. 25000000">
         </div>
       </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
         <select name="salary_currency">
@@ -37,6 +53,7 @@
           <option {% if prefs.salary_currency == 'USD' %}selected{% endif %}>USD</option>
         </select>
       </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
         <select name="company_size_preference">
@@ -46,10 +63,62 @@
           {% endfor %}
         </select>
       </div>
+
       <div class="pt-2">
         <button type="submit" class="btn btn-primary">Save Preferences</button>
       </div>
     </form>
   </div>
 </div>
+
+<script>
+document.querySelectorAll('.tag-input-widget').forEach(widget => {
+  const field = widget.dataset.field;
+  const hidden = document.getElementById(field + '_hidden');
+  let items = [];
+
+  try { items = JSON.parse(widget.dataset.initial || '[]'); } catch {}
+
+  function render() {
+    hidden.value = JSON.stringify(items);
+    widget.innerHTML = '';
+
+    // Tag list
+    const tags = document.createElement('div');
+    tags.className = 'flex flex-wrap gap-2 mb-2';
+    items.forEach((item, i) => {
+      const tag = document.createElement('span');
+      tag.className = 'inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200';
+      tag.innerHTML = `${item} <button type="button" class="text-blue-400 hover:text-blue-700 leading-none">&times;</button>`;
+      tag.querySelector('button').onclick = () => { items.splice(i, 1); render(); };
+      tags.appendChild(tag);
+    });
+    if (items.length) widget.appendChild(tags);
+
+    // Add input
+    const row = document.createElement('div');
+    row.className = 'flex gap-2';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Type and press Add';
+    input.className = 'flex-1';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '+ Add';
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.onclick = () => {
+      const val = input.value.trim();
+      if (val && !items.includes(val)) { items.push(val); render(); }
+      else input.value = '';
+    };
+    input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } };
+    row.appendChild(input);
+    row.appendChild(btn);
+    widget.appendChild(row);
+    if (document.activeElement === input) input.focus();
+  }
+
+  render();
+});
+</script>
 {% endblock %}

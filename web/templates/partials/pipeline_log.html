@@ -1,0 +1,62 @@
+<div id="pipeline-log"
+  hx-get="/api/pipeline/log"
+  hx-trigger="every 3s"
+  hx-swap="outerHTML"
+  class="flex flex-col h-full">
+
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Live Log</h2>
+    {% if is_running %}
+    <span class="flex items-center gap-1.5 text-xs text-blue-500 font-medium">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block"></span>
+      {{ stage or "running" }}
+    </span>
+    {% else %}
+    <span class="text-xs text-gray-400">idle</span>
+    {% endif %}
+  </div>
+
+  <!-- Scored jobs -->
+  {% if recent_jobs %}
+  <div class="mb-4">
+    <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Recent Scored Jobs</p>
+    <div class="space-y-2">
+      {% for job in recent_jobs %}
+      <a href="/jobs/{{ job.id }}" class="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-gray-50 border border-gray-100 block">
+        <div class="min-w-0">
+          <p class="text-xs font-medium text-gray-800 truncate">{{ job.title }}</p>
+          <p class="text-xs text-gray-400 truncate">{{ job.company }}</p>
+        </div>
+        {% if job.compatibility_score is not none %}
+        <span class="text-xs font-bold flex-shrink-0 {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-500{% else %}text-red-400{% endif %}">
+          {{ (job.compatibility_score * 100) | int }}%
+        </span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Activity entries -->
+  <div class="flex-1 overflow-y-auto space-y-1 text-xs font-mono">
+    {% for entry in entries %}
+    <div class="flex gap-2 items-start">
+      <span class="text-gray-300 flex-shrink-0">{{ entry.timestamp[11:19] }}</span>
+      <span class="flex-shrink-0
+        {% if entry.action in ['pipeline_complete', 'submitted'] %}text-green-500
+        {% elif entry.action == 'failed' %}text-red-400
+        {% elif entry.action == 'scored' %}text-blue-400
+        {% elif entry.action == 'scraped' %}text-yellow-500
+        {% elif entry.action == 'pipeline_stopped' %}text-orange-400
+        {% else %}text-gray-400{% endif %}">
+        [{{ entry.action }}]
+      </span>
+      <span class="text-gray-500 break-all">{{ entry.details or '' }}</span>
+    </div>
+    {% endfor %}
+    {% if not entries %}
+    <p class="text-gray-300">No activity yet.</p>
+    {% endif %}
+  </div>
+</div>

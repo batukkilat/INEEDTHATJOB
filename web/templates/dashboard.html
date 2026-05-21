@@ -2,71 +2,120 @@
 {% block title %}Dashboard — INEEDTHATJOB{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl">
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
-  <!-- Stats -->
-  <div id="stats" class="grid grid-cols-3 gap-4 mb-8">
-    {% include "partials/stats.html" %}
-  </div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-  <!-- Pipeline -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Pipeline</h2>
-    {% if last_run %}
-    <p class="text-xs text-gray-400 mb-3">Last run: {{ last_run[:16] | replace("T", " ") }} UTC</p>
-    {% else %}
-    <p class="text-xs text-gray-400 mb-3">Never run</p>
-    {% endif %}
-    <div class="flex items-center gap-4">
-      <button
-        hx-post="/api/pipeline/run"
-        hx-target="#pipeline-status"
-        hx-swap="outerHTML"
-        hx-indicator="#pipeline-btn-spinner"
-        class="btn btn-primary">
-        ▶ Run Pipeline Now
-      </button>
-      <svg id="pipeline-btn-spinner" class="htmx-indicator w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-      </svg>
-      <div id="pipeline-status" class="text-sm text-gray-400">
-        {% if is_pipeline_running %}
-        <span hx-get="/api/pipeline/status" hx-trigger="every 5s" hx-swap="outerHTML">⏳ Running…</span>
-        {% endif %}
-      </div>
+  <!-- Left column -->
+  <div class="lg:col-span-2 space-y-6">
+
+    <!-- Stats -->
+    <div id="stats" class="grid grid-cols-3 gap-4">
+      {% include "partials/stats.html" %}
     </div>
-    <p class="text-xs text-gray-400 mt-2">
-      Scrapes LinkedIn Indonesia → scores compatibility → queues for review.
-      Set target roles in <a href="/settings" class="underline">Settings</a> first.
-    </p>
-  </div>
 
-  <!-- Activity feed -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h2>
-      <a href="/jobs" class="text-xs text-blue-500 hover:underline">View all jobs →</a>
-    </div>
-    {% if recent_activity %}
-      <ul class="space-y-2">
-        {% for log in recent_activity %}
-        <li class="flex items-start gap-3 text-sm">
-          <span class="text-gray-400 whitespace-nowrap font-mono text-xs mt-0.5">{{ log.timestamp[:16] | replace("T", " ") }}</span>
-          <span class="badge flex-shrink-0
-            {% if log.action in ['submitted', 'pipeline_complete'] %}badge-green
-            {% elif log.action in ['failed'] %}badge-red
-            {% elif log.action in ['approved', 'scored'] %}badge-blue
-            {% elif log.action in ['scraped'] %}badge-yellow
-            {% else %}badge-gray{% endif %}">{{ log.action }}</span>
-          <span class="text-gray-600">{{ log.details or '' }}</span>
-        </li>
+    <!-- Pipeline -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Pipeline</h2>
+      {% if last_run %}
+      <p class="text-xs text-gray-400 mb-3">Last run: {{ last_run[:16] | replace("T", " ") }} UTC</p>
+      {% else %}
+      <p class="text-xs text-gray-400 mb-3">Never run</p>
+      {% endif %}
+
+      <!-- Platform selector -->
+      <div class="flex gap-4 mb-3">
+        {% set platforms_available = [("linkedin", true), ("glints", false), ("jobstreet", false)] %}
+        {% for name, available in platforms_available %}
+        <label class="flex items-center gap-1.5 text-sm {% if not available %}opacity-40{% endif %}">
+          <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
+                 {% if available %}checked{% endif %}
+                 {% if not available %}disabled{% endif %}
+                 class="rounded border-gray-300">
+          {{ name | capitalize }}
+          {% if not available %}<span class="text-xs text-gray-400">(soon)</span>{% endif %}
+        </label>
         {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-sm text-gray-400">No activity yet. Run the pipeline to get started.</p>
-    {% endif %}
+      </div>
+
+      <form id="pipeline-form"
+            hx-post="/api/pipeline/run"
+            hx-target="#pipeline-status"
+            hx-swap="outerHTML"
+            hx-indicator="#pipeline-btn-spinner"
+            class="flex items-center gap-3">
+        <button type="submit" class="btn btn-primary">Jobmaxxing</button>
+        <button type="button"
+          hx-post="/api/pipeline/stop"
+          hx-target="#pipeline-status"
+          hx-swap="outerHTML"
+          class="btn btn-sm border border-red-200 text-red-500 hover:bg-red-50 {% if not is_pipeline_running %}opacity-40 pointer-events-none{% endif %}">
+          Stop
+        </button>
+        <button type="button"
+          hx-post="/api/pipeline/rescore"
+          hx-target="#rescore-status"
+          hx-confirm="Reset all scored jobs back to 'new' so they get re-scored on next run?"
+          class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">
+          Re-score all
+        </button>
+        <span id="rescore-status" class="text-sm"></span>
+        <svg id="pipeline-btn-spinner" class="htmx-indicator w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+        </svg>
+        <div id="pipeline-status" class="text-sm text-gray-400">
+          {% if is_pipeline_running %}
+          <span hx-get="/api/pipeline/status" hx-trigger="every 5s" hx-swap="outerHTML">Running…</span>
+          {% endif %}
+        </div>
+      </form>
+
+      <!-- Progress bar -->
+      <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div id="pipeline-progress"
+             class="h-full bg-blue-500 rounded-full transition-all duration-700 ease-in-out"
+             style="width: {% if is_pipeline_running %}60%{% else %}0%{% endif %}">
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">
+        Scrapes job listings → scores compatibility → queues for review.
+        Set target roles in <a href="/settings" class="underline">Settings</a> first.
+      </p>
+    </div>
+
+    <!-- Activity feed -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h2>
+        <a href="/jobs" class="text-xs text-blue-500 hover:underline">View all jobs →</a>
+      </div>
+      {% if recent_activity %}
+        <ul class="space-y-2">
+          {% for log in recent_activity %}
+          <li class="flex items-start gap-3 text-sm">
+            <span class="text-gray-400 whitespace-nowrap font-mono text-xs mt-0.5">{{ log.timestamp[:16] | replace("T", " ") }}</span>
+            <span class="badge flex-shrink-0
+              {% if log.action in ['submitted', 'pipeline_complete'] %}badge-green
+              {% elif log.action in ['failed'] %}badge-red
+              {% elif log.action in ['approved', 'scored'] %}badge-blue
+              {% elif log.action in ['scraped', 'pipeline_scrape_start'] %}badge-yellow
+              {% else %}badge-gray{% endif %}">{{ log.action }}</span>
+            <span class="text-gray-600">{{ log.details or '' }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-gray-400">No activity yet. Run the pipeline to get started.</p>
+      {% endif %}
+    </div>
   </div>
+
+  <!-- Right column — live log (aligned with stats row) -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 lg:sticky lg:top-6 flex flex-col"
+       style="max-height: calc(100vh - 5rem); overflow: hidden;">
+    {% include "partials/pipeline_log.html" with context %}
+  </div>
+
 </div>
 {% endblock %}

@@ -6,19 +6,39 @@ from sqlmodel import Session, select
 
 from config import settings
 from db.database import engine
-from db.models import Job, ActivityLog, Preferences
+from db.models import Job, Application, ActivityLog, Preferences
+from generation.resume import generate_resume
+from generation.cover_letter import generate_cover_letter
+from generation.email_composer import compose_email
 from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scorer import score_job
 from jobs.service import upsert_job
 from utils.logging import get_logger
 
+MIN_SCORE_TO_GENERATE = 0.55
+
 log = get_logger(__name__)
 
 _running = False
+_stage = ""
+_stop_requested = False
 
 
 def is_running() -> bool:
     return _running
+
+
+def current_stage() -> str:
+    return _stage
+
+
+def request_stop() -> None:
+    global _stop_requested
+    _stop_requested = True
+
+
+def stop_requested() -> bool:
+    return _stop_requested
 
 
 def _now() -> str:
@@ -42,13 +62,48 @@ def _get_keywords(session: Session) -> list[str]:
     return ["Backend Engineer", "Software Engineer", "Python Developer"]
 
 
-async def _scrape_phase(session: Session, max_pages: int) -> list[Job]:
-    keywords = _get_keywords(session)
-    log.info("pipeline_scrape_start", keywords=keywords, max_pages=max_pages)
-    _log_activity(session, "pipeline_scrape_start", details=f"keywords: {keywords}")
+def _title_matches_targets(title: str, target_roles: list[str]) -> bool:
+    """Return True if job title contains all key tokens of at least one target role.
 
-    scraper = LinkedInScraper()
-    raw_jobs = await scraper.scrape(max_pages=max_pages, keywords=keywords)
+    Uses prefix matching so 'engineer' matches 'engineering', etc.
+    LinkedIn search is fuzzy — this hard-filters results that don't belong.
+    """
+    title_tokens = set(title.lower().split())
+    for role in target_roles:
+        role_tokens = role.lower().split()
+        if all(
+            any(t_tok.startswith(r_tok) for t_tok in title_tokens)
+            for r_tok in role_tokens
+        ):
+            return True
+    return False
+
+
+_SCRAPER_MAP = {
+    "linkedin": LinkedInScraper,
+}
+
+
+async def _scrape_phase(session: Session, max_pages: int, platforms: list[str]) -> list[Job]:
+    keywords = _get_keywords(session)
+    log.info("pipeline_scrape_start", keywords=keywords, max_pages=max_pages, platforms=platforms)
+    _log_activity(session, "pipeline_scrape_start", details=f"platforms: {platforms} | keywords: {keywords}")
+
+    raw_jobs: list[Job] = []
+    for platform in platforms:
+        cls = _SCRAPER_MAP.get(platform)
+        if not cls:
+            log.warning("scraper_not_found", platform=platform)
+            continue
+        scraper = cls()
+        jobs = await scraper.scrape(max_pages=max_pages, keywords=keywords)
+        before = len(jobs)
+        jobs = [j for j in jobs if _title_matches_targets(j.title, keywords)]
+        filtered = before - len(jobs)
+        if filtered:
+            log.info("title_filter_dropped", platform=platform, count=filtered)
+        raw_jobs.extend(jobs)
+        _log_activity(session, "scraped", details=f"{platform}: {len(jobs)} listings found ({filtered} filtered by title)")
 
     saved = []
     new_count = 0
@@ -105,28 +160,100 @@ async def _score_phase(session: Session) -> int:
     return scored
 
 
-async def run_pipeline(max_pages: int = 3) -> dict:
-    global _running
+async def _generate_phase(session: Session) -> int:
+    candidates = list(session.exec(
+        select(Job)
+        .where(Job.status == "scored")
+        .where(Job.compatibility_score >= MIN_SCORE_TO_GENERATE)
+    ).all())
+    log.info("pipeline_generate_start", count=len(candidates))
+    _log_activity(session, "pipeline_generate_start",
+                  details=f"Generating for {len(candidates)} jobs (score ≥ {MIN_SCORE_TO_GENERATE:.0%})")
+    generated = 0
+    for job in candidates:
+        try:
+            job.status = "generating"
+            session.add(job)
+            session.commit()
+
+            docx_path, resume_content = await generate_resume(job, session)
+            cover_letter = await generate_cover_letter(job, session)
+            email_subject, email_body = await compose_email(job, session)
+
+            app = Application(
+                job_id=job.id,
+                resume_path=docx_path,
+                resume_content=json.dumps(resume_content),
+                cover_letter=cover_letter,
+                email_subject=email_subject,
+                email_body=email_body,
+                apply_status="pending_review",
+                created_at=_now(),
+            )
+            session.add(app)
+            job.status = "review_ready"
+            session.add(job)
+            session.commit()
+            _log_activity(session, "generated", job_id=job.id,
+                          details=f"{job.title} @ {job.company}")
+            generated += 1
+            await asyncio.sleep(8)  # 3 calls/job × 8s = ~22 jobs/min, under Groq 30 RPM
+        except Exception as e:
+            log.error("generate_failed", job_id=job.id, error=str(e))
+            job.status = "scored"
+            session.add(job)
+            session.commit()
+
+    log.info("pipeline_generate_done", generated=generated)
+    return generated
+
+
+async def run_pipeline(max_pages: int = 3, platforms: list[str] | None = None) -> dict:
+    global _running, _stage, _stop_requested
     if _running:
         log.warning("pipeline_already_running")
         return {"status": "already_running"}
 
     _running = True
+    _stop_requested = False
+    if platforms is None:
+        platforms = ["linkedin"]
     result = {"scraped": 0, "new": 0, "scored": 0, "status": "ok"}
 
     try:
         with Session(engine) as session:
             _log_activity(session, "pipeline_start")
 
-            jobs = await _scrape_phase(session, max_pages)
+            _stage = "scraping"
+            jobs = await _scrape_phase(session, max_pages, platforms)
             result["scraped"] = len(jobs)
             result["new"] = sum(1 for j in jobs if j.status == "new")
 
-            # Fetch descriptions for new jobs (best-effort)
+            if _stop_requested:
+                result["status"] = "stopped"
+                _log_activity(session, "pipeline_stopped")
+                return result
+
+            _stage = "fetching"
             await _fetch_descriptions(session, jobs)
 
+            if _stop_requested:
+                result["status"] = "stopped"
+                _log_activity(session, "pipeline_stopped")
+                return result
+
+            _stage = "scoring"
             scored = await _score_phase(session)
             result["scored"] = scored
+
+            if _stop_requested:
+                result["status"] = "stopped"
+                _log_activity(session, "pipeline_stopped")
+                return result
+
+            _stage = "generating"
+            generated = await _generate_phase(session)
+            result["generated"] = generated
 
             _log_activity(session, "pipeline_complete", details=json.dumps(result))
             log.info("pipeline_complete", **result)
@@ -138,5 +265,6 @@ async def run_pipeline(max_pages: int = 3) -> dict:
             _log_activity(session, "failed", details=str(e))
     finally:
         _running = False
+        _stage = ""
 
     return result

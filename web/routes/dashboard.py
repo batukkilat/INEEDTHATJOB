@@ -29,6 +29,18 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         .order_by(ActivityLog.timestamp.desc())
     ).first()
 
+    log_entries = list(session.exec(
+        select(ActivityLog).order_by(ActivityLog.timestamp.desc()).limit(40)
+    ).all())
+    log_entries.reverse()
+
+    recent_jobs = list(session.exec(
+        select(Job)
+        .where(Job.compatibility_score.is_not(None))
+        .order_by(Job.scraped_at.desc())
+        .limit(20)
+    ).all())
+
     return templates.TemplateResponse(request, "dashboard.html", {
         "current_page": "dashboard",
         "total_jobs": total_jobs,
@@ -37,4 +49,8 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         "recent_activity": recent_activity,
         "last_run": last_run_log.timestamp if last_run_log else None,
         "is_pipeline_running": pipe.is_running(),
+        "entries": log_entries,
+        "recent_jobs": recent_jobs,
+        "stage": pipe.current_stage(),
+        "is_running": pipe.is_running(),
     })

@@ -136,6 +136,13 @@ def skill_delete(skill_id: int, session: Session = Depends(get_session)):
     return HTMLResponse("")
 
 
+@router.delete("/skills", response_class=HTMLResponse)
+def skills_clear(session: Session = Depends(get_session)):
+    for s in svc.get_skills(session):
+        svc.delete_skill(session, s.id)
+    return HTMLResponse('<tr><td colspan="6" class="px-4 py-6 text-sm text-gray-400 text-center">No skills yet.</td></tr>')
+
+
 # ── Experiences ───────────────────────────────────────────────────────────────
 
 @router.get("/experiences/new", response_class=HTMLResponse)
@@ -211,6 +218,13 @@ def experience_update(
 def experience_delete(exp_id: int, session: Session = Depends(get_session)):
     svc.delete_experience(session, exp_id)
     return HTMLResponse("")
+
+
+@router.delete("/experiences", response_class=HTMLResponse)
+def experiences_clear(session: Session = Depends(get_session)):
+    for e in svc.get_experiences(session):
+        svc.delete_experience(session, e.id)
+    return HTMLResponse('<div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No experience yet.</div>')
 
 
 # ── Achievements ──────────────────────────────────────────────────────────────
@@ -348,6 +362,13 @@ def education_delete(edu_id: int, session: Session = Depends(get_session)):
     return HTMLResponse("")
 
 
+@router.delete("/education", response_class=HTMLResponse)
+def education_clear(session: Session = Depends(get_session)):
+    for e in svc.get_education_list(session):
+        svc.delete_education(session, e.id)
+    return HTMLResponse('<tr><td colspan="6" class="px-4 py-6 text-sm text-gray-400 text-center">No education yet.</td></tr>')
+
+
 # ── Certifications ────────────────────────────────────────────────────────────
 
 @router.get("/certifications/new", response_class=HTMLResponse)
@@ -410,6 +431,13 @@ def certification_update(
 def certification_delete(cert_id: int, session: Session = Depends(get_session)):
     svc.delete_certification(session, cert_id)
     return HTMLResponse("")
+
+
+@router.delete("/certifications", response_class=HTMLResponse)
+def certifications_clear(session: Session = Depends(get_session)):
+    for c in svc.get_certifications(session):
+        svc.delete_certification(session, c.id)
+    return HTMLResponse('<tr><td colspan="5" class="px-4 py-6 text-sm text-gray-400 text-center">No certifications yet.</td></tr>')
 
 
 # ── Projects ──────────────────────────────────────────────────────────────────
@@ -478,3 +506,10 @@ def project_update(
 def project_delete(project_id: int, session: Session = Depends(get_session)):
     svc.delete_project(session, project_id)
     return HTMLResponse("")
+
+
+@router.delete("/projects", response_class=HTMLResponse)
+def projects_clear(session: Session = Depends(get_session)):
+    for p in svc.get_projects(session):
+        svc.delete_project(session, p.id)
+    return HTMLResponse('<div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No projects yet.</div>')

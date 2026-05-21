@@ -157,12 +157,13 @@ def _title_relevance(job_title: str, prefs: Optional[Preferences]) -> float:
     if not prefs or not prefs.target_roles:
         return 0.6
     roles = json.loads(prefs.target_roles) if isinstance(prefs.target_roles, str) else []
-    title_lower = job_title.lower()
+    title_tokens = set(job_title.lower().split())
     for role in roles:
-        words = role.lower().split()
-        if sum(1 for w in words if w in title_lower) / max(len(words), 1) >= 0.5:
+        role_tokens = role.lower().split()
+        # Prefix match handles plurals/gerunds (e.g. "engineer" matches "engineering")
+        if all(any(t.startswith(r) for t in title_tokens) for r in role_tokens):
             return 1.0
-    return 0.4
+    return 0.0
 
 
 def _language_match(languages: list[str], prefs: Optional[Preferences]) -> float:

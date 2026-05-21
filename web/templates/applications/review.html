@@ -2,66 +2,148 @@
 {% block title %}Review Queue — INEEDTHATJOB{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl">
+<div class="max-w-4xl">
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Review Queue</h1>
-    <span class="text-sm text-gray-400">{{ applications | length }} pending</span>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-gray-400">{{ applications | length }} pending</span>
+      <button
+        hx-get="/review"
+        hx-target="#review-content"
+        hx-swap="innerHTML"
+        hx-select="#review-content"
+        class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">
+        ↻ Refresh
+      </button>
+    </div>
   </div>
+
+  <!-- Filter bar -->
+  <div class="mb-4">
+    <input
+      type="text"
+      id="review-filter"
+      placeholder="Filter by title or company…"
+      oninput="filterReview(this.value)"
+      class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300">
+  </div>
+
+  <div id="review-content">
 
   {% if applications %}
     {% for app in applications %}
-    <div id="app-{{ app.id }}" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
-      <div class="flex items-start justify-between mb-4">
+    {% set job = app.job %}
+    <div id="app-{{ app.id }}" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+
+      <!-- Header -->
+      <div class="flex items-start justify-between p-5 border-b border-gray-100">
         <div>
-          <h2 class="font-semibold text-gray-900">{{ app.job.title if app.job else 'Unknown Job' }}</h2>
-          <p class="text-sm text-gray-500">{{ app.job.company if app.job else '' }}</p>
+          <h2 class="font-semibold text-gray-900">{{ job.title if job else 'Unknown Job' }}</h2>
+          <p class="text-sm text-gray-500 mt-0.5">
+            {{ job.company if job else '' }}
+            {% if job and job.location %} &middot; {{ job.location }}{% endif %}
+            {% if job and job.compatibility_score is not none %}
+              &middot; <span class="font-medium {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-600{% else %}text-red-400{% endif %}">
+                {{ (job.compatibility_score * 100) | int }}% match
+              </span>
+            {% endif %}
+          </p>
+          {% if job %}<a href="{{ job.url }}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">View posting ↗</a>{% endif %}
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-shrink-0">
+          {% if app.resume_path %}
+          <a href="/review/{{ app.id }}/download" class="btn btn-secondary btn-sm">↓ Resume</a>
+          {% endif %}
           <button
             hx-post="/review/{{ app.id }}/approve"
             hx-target="#app-{{ app.id }}"
             hx-swap="outerHTML"
-            hx-confirm="Approve this application?"
             class="btn btn-primary btn-sm">Approve</button>
           <button
             hx-post="/review/{{ app.id }}/reject"
             hx-target="#app-{{ app.id }}"
             hx-swap="outerHTML"
-            hx-confirm="Skip this application?"
-            class="btn btn-ghost btn-sm">Skip</button>
+            class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">Skip</button>
         </div>
       </div>
 
+      <!-- Resume preview -->
+      {% if app.resume_content %}
+      {% set rc = app.resume_content | fromjson %}
+      <div class="p-5 border-b border-gray-100 bg-gray-50">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Resume Preview</p>
+        {% if rc.get("summary") %}
+        <p class="text-sm text-gray-600 mb-3 italic leading-relaxed">{{ rc["summary"] }}</p>
+        {% endif %}
+        {% if rc.get("selected_skills") %}
+        <div class="flex flex-wrap gap-1 mb-4">
+          {% for skill in rc["selected_skills"] %}
+          <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded border border-blue-100">{{ skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if rc.get("experiences") %}
+        <div class="space-y-4">
+          {% for exp in rc["experiences"] %}
+          <div>
+            <p class="text-sm font-semibold text-gray-800">{{ exp.get("title","") }} — {{ exp.get("company","") }}</p>
+            <ul class="mt-1 space-y-1 pl-4 list-disc">
+              {% for bullet in exp.get("bullets", []) %}
+              <li class="text-sm text-gray-600">{{ bullet }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Cover letter -->
       {% if app.cover_letter %}
-      <div class="mb-3">
-        <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Cover Letter</p>
+      <div class="p-5 border-b border-gray-100">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Cover Letter <span class="text-gray-300 font-normal normal-case">(click to edit, auto-saves on blur)</span></p>
         <textarea
           hx-put="/review/{{ app.id }}/cover-letter"
           hx-trigger="blur"
           name="cover_letter"
-          class="text-sm text-gray-700 leading-relaxed p-2 border rounded-md w-full"
-          rows="6">{{ app.cover_letter }}</textarea>
+          rows="8"
+          class="w-full text-sm text-gray-700 leading-relaxed p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y">{{ app.cover_letter }}</textarea>
       </div>
       {% endif %}
 
+      <!-- Email -->
       {% if app.email_body %}
-      <div>
-        <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Email</p>
-        <p class="text-xs text-gray-500 mb-1">Subject: {{ app.email_subject }}</p>
+      <div class="p-5">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Application Email</p>
+        <p class="text-xs text-gray-500 mb-2">Subject: <span class="font-medium text-gray-700">{{ app.email_subject }}</span></p>
         <textarea
           hx-put="/review/{{ app.id }}/email"
           hx-trigger="blur"
           name="email_body"
-          class="text-sm text-gray-700 leading-relaxed p-2 border rounded-md w-full"
-          rows="4">{{ app.email_body }}</textarea>
+          rows="5"
+          class="w-full text-sm text-gray-700 leading-relaxed p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y">{{ app.email_body }}</textarea>
       </div>
       {% endif %}
+
     </div>
     {% endfor %}
   {% else %}
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-    <p class="text-gray-400 text-sm">No applications awaiting review.</p>
+    <p class="text-gray-400 text-sm mb-2">No applications awaiting review.</p>
+    <p class="text-xs text-gray-300">Run the pipeline — jobs scoring ≥ 55% get a tailored resume + cover letter generated automatically.</p>
   </div>
   {% endif %}
+  </div>
 </div>
+
+<script>
+function filterReview(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('#review-content [id^="app-"]').forEach(card => {
+    const text = card.querySelector('h2, p')?.closest('div')?.textContent?.toLowerCase() || card.textContent.toLowerCase();
+    card.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+}
+</script>
 {% endblock %}

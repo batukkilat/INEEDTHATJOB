@@ -49,7 +49,7 @@
       </span>
     </div>
     {% if job.score_breakdown %}
-    {% set breakdown = job.score_breakdown | tojson | fromjson if job.score_breakdown is string else job.score_breakdown %}
+    {% set breakdown = job.score_breakdown | fromjson %}
     <div class="space-y-2">
       {% set score_labels = {
         'skill_match': 'Skill Match',

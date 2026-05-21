@@ -1,14 +1,20 @@
-Extract all professional profile information from the resume text below.
+Extract professional profile data from the resume below. Return ONLY a valid JSON object — no explanation, no markdown, no code fences.
+
+The JSON must have exactly these top-level keys:
+- "skills": array of {name, category ("technical"|"soft"|"domain"|"language"), proficiency ("expert"|"advanced"|"intermediate"|"beginner"), years_experience (number), keywords (string)}
+- "experiences": array of {company, title, start_date (YYYY-MM), end_date (YYYY-MM or null if current), location, description, is_remote (bool), achievements: [{description, metrics, skills_used}]}
+- "education": array of {institution, degree, field, start_date (YYYY-MM), end_date (YYYY-MM), gpa}
+- "certifications": array of {name, issuer, date_obtained (YYYY-MM), expiry_date (YYYY-MM)}
+- "projects": array of {name, description, url, skills_used, highlights}
 
 Rules:
-- Extract every skill mentioned (technical tools, languages, frameworks, soft skills).
-- For proficiency, infer from context: years used, seniority level, or explicit mentions.
-- For experience dates, use YYYY-MM format. If only year is given, use YYYY-01 / YYYY-12.
-- For achievements, extract bullet points under each role. Include any metrics or results.
-- skills_used in achievements should be a comma-separated string of relevant skills.
-- If end_date is missing and it's the most recent role, leave it null (= current job).
-- Extract certifications only if explicitly listed (not just skills).
-- Extract projects if mentioned (personal projects, open source, notable work outside employment).
+- Extract every skill mentioned. Infer proficiency from context.
+- For dates, use YYYY-MM. If only year given, use YYYY-01 for start and YYYY-12 for end.
+- If end_date is missing on the most recent role, use null.
+- Only include certifications explicitly listed, not general skills.
+- Use empty arrays [] for sections not present in the resume.
 
 RESUME:
 {resume_text}
+
+JSON:

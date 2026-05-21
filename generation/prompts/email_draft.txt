@@ -1,14 +1,19 @@
-Draft a professional application email for the following job.
+Write a short, human application email. No fluff, no corporate-speak.
 
-The email should:
-- Have a clear, specific subject line
-- Be concise (3-5 sentences in the body)
-- Reference the attached resume and cover letter
+Rules:
+- 3-4 sentences max in the body
+- Open directly (not "I am writing to express my interest...")
+- Mention one specific thing from the job or company that actually interests you
+- Reference attached resume and cover letter
 - Match the language of the job posting ({language})
+- Sign off with the applicant's real name
 
-Return JSON with fields: subject, body
+Return JSON with exactly two fields: subject, body
 
 JOB TITLE: {job_title}
 COMPANY: {company}
-CONTACT EMAIL: {contact_email}
 FROM NAME: {from_name}
+
+APPLICANT BACKGROUND (use this to sound like a real person, not a template):
+Most recent role: {recent_role}
+Key skills: {top_skills}
