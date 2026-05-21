@@ -153,17 +153,24 @@ def _location_match(job: Job, prefs: Optional[Preferences]) -> float:
     return 0.4
 
 
+def title_matches_roles(title: str, roles: list[str]) -> bool:
+    """True if title contains all tokens of at least one role.
+
+    Prefix match handles plurals/gerunds (e.g. "engineer" matches "engineering").
+    """
+    title_tokens = set(title.lower().split())
+    for role in roles:
+        role_tokens = role.lower().split()
+        if all(any(t.startswith(r) for t in title_tokens) for r in role_tokens):
+            return True
+    return False
+
+
 def _title_relevance(job_title: str, prefs: Optional[Preferences]) -> float:
     if not prefs or not prefs.target_roles:
         return 0.6
     roles = json.loads(prefs.target_roles) if isinstance(prefs.target_roles, str) else []
-    title_tokens = set(job_title.lower().split())
-    for role in roles:
-        role_tokens = role.lower().split()
-        # Prefix match handles plurals/gerunds (e.g. "engineer" matches "engineering")
-        if all(any(t.startswith(r) for t in title_tokens) for r in role_tokens):
-            return 1.0
-    return 0.0
+    return 1.0 if title_matches_roles(job_title, roles) else 0.0
 
 
 def _language_match(languages: list[str], prefs: Optional[Preferences]) -> float:

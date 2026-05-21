@@ -11,7 +11,8 @@ from generation.resume import generate_resume
 from generation.cover_letter import generate_cover_letter
 from generation.email_composer import compose_email
 from jobs.scrapers.linkedin import LinkedInScraper
-from jobs.scorer import score_job
+from generation.common import build_profile_json
+from jobs.scorer import score_job, title_matches_roles
 from jobs.service import upsert_job
 from utils.logging import get_logger
 
@@ -62,23 +63,6 @@ def _get_keywords(session: Session) -> list[str]:
     return ["Backend Engineer", "Software Engineer", "Python Developer"]
 
 
-def _title_matches_targets(title: str, target_roles: list[str]) -> bool:
-    """Return True if job title contains all key tokens of at least one target role.
-
-    Uses prefix matching so 'engineer' matches 'engineering', etc.
-    LinkedIn search is fuzzy — this hard-filters results that don't belong.
-    """
-    title_tokens = set(title.lower().split())
-    for role in target_roles:
-        role_tokens = role.lower().split()
-        if all(
-            any(t_tok.startswith(r_tok) for t_tok in title_tokens)
-            for r_tok in role_tokens
-        ):
-            return True
-    return False
-
-
 _SCRAPER_MAP = {
     "linkedin": LinkedInScraper,
 }
@@ -98,7 +82,7 @@ async def _scrape_phase(session: Session, max_pages: int, platforms: list[str]) 
         scraper = cls()
         jobs = await scraper.scrape(max_pages=max_pages, keywords=keywords)
         before = len(jobs)
-        jobs = [j for j in jobs if _title_matches_targets(j.title, keywords)]
+        jobs = [j for j in jobs if title_matches_roles(j.title, keywords)]
         filtered = before - len(jobs)
         if filtered:
             log.info("title_filter_dropped", platform=platform, count=filtered)
@@ -169,16 +153,19 @@ async def _generate_phase(session: Session) -> int:
     log.info("pipeline_generate_start", count=len(candidates))
     _log_activity(session, "pipeline_generate_start",
                   details=f"Generating for {len(candidates)} jobs (score ≥ {MIN_SCORE_TO_GENERATE:.0%})")
+    profile = build_profile_json(session)
     generated = 0
     for job in candidates:
+        if _stop_requested:
+            break
         try:
             job.status = "generating"
             session.add(job)
             session.commit()
 
-            docx_path, resume_content = await generate_resume(job, session)
-            cover_letter = await generate_cover_letter(job, session)
-            email_subject, email_body = await compose_email(job, session)
+            docx_path, resume_content = await generate_resume(job, session, profile)
+            cover_letter = await generate_cover_letter(job, session, profile)
+            email_subject, email_body = await compose_email(job, session, profile)
 
             app = Application(
                 job_id=job.id,

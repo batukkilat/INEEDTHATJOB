@@ -9,6 +9,18 @@ log = get_logger(__name__)
 GROQ_BASE = "https://api.groq.com/openai/v1"
 
 
+def extract_json(text: str) -> dict | None:
+    """Pull the first JSON object out of an LLM text response. None if unparseable."""
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end <= start:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return None
+
+
 def _headers() -> dict:
     return {"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"}
 
@@ -68,13 +80,9 @@ def chat_with_tool(model: str, messages: list[dict], tool_name: str, tool_schema
 
     # Fallback: parse JSON from text
     text = msg.get("content", "")
-    try:
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start != -1 and end > start:
-            return json.loads(text[start:end])
-    except json.JSONDecodeError:
-        pass
+    parsed = extract_json(text)
+    if parsed is not None:
+        return parsed
 
     log.warning("tool_call_parse_failed", response=text[:200])
     return {}

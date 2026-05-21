@@ -11,6 +11,7 @@ from docx.oxml import OxmlElement
 from sqlmodel import Session
 
 from config import settings
+from generation.common import build_profile_json, load_prompt
 from utils.llm import chat_with_tool
 from utils.logging import get_logger
 
@@ -68,34 +69,10 @@ _TAILOR_TOOL = {
 }
 
 
-def _build_profile_json(session: Session) -> dict:
-    import profile.service as svc
-    skills = [{"name": s.name, "category": s.category, "proficiency": s.proficiency}
-              for s in svc.get_skills(session)]
-    experiences = []
-    for exp in svc.get_experiences(session):
-        achievements = svc.get_achievements(session, exp.id)
-        experiences.append({
-            "company": exp.company,
-            "title": exp.title,
-            "start_date": exp.start_date or "",
-            "end_date": exp.end_date or "Present",
-            "location": exp.location or "",
-            "achievements": [{"description": a.description, "metrics": a.metrics}
-                             for a in achievements],
-        })
-    education = [{"institution": e.institution, "degree": e.degree,
-                  "field": e.field or "", "start_date": e.start_date or "", "end_date": e.end_date or "Present"}
-                 for e in svc.get_education_list(session)]
-    projects = [{"name": p.name, "description": p.description}
-                for p in svc.get_projects(session)]
-    return {"skills": skills, "experiences": experiences,
-            "education": education, "projects": projects}
-
-
-def tailor_resume(job, session: Session) -> dict:
-    prompt_tmpl = Path("generation/prompts/resume_tailor.txt").read_text()
-    profile = _build_profile_json(session)
+def tailor_resume(job, session: Session, profile: dict | None = None) -> dict:
+    prompt_tmpl = load_prompt("resume_tailor.txt")
+    if profile is None:
+        profile = build_profile_json(session)
     prompt = (prompt_tmpl
               .replace("{job_title}", job.title)
               .replace("{company}", job.company)
@@ -230,8 +207,8 @@ def generate_docx(content: dict, job_id: int) -> str:
     return out_path
 
 
-async def generate_resume(job, session: Session) -> tuple[str, dict]:
+async def generate_resume(job, session: Session, profile: dict | None = None) -> tuple[str, dict]:
     """Tailor and generate resume DOCX. Returns (docx_path, content_dict)."""
-    content = tailor_resume(job, session)
+    content = tailor_resume(job, session, profile)
     docx_path = generate_docx(content, job.id)
     return docx_path, content
