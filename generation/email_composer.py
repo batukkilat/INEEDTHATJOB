@@ -30,6 +30,7 @@ async def compose_email(job, session: Session, profile: dict | None = None) -> t
     from_name = settings.from_name or ""
     if not from_name:
         log.warning("from_name_missing", hint="Set FROM_NAME in .env — emails will lack a real name")
+        from_name = "[Your Name]"
 
     recent_role = ""
     if filtered.get("experiences"):

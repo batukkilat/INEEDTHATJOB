@@ -5,11 +5,13 @@ PLANNING STEP — think silently before writing (do not include in output):
 
 Rules:
 - 3-4 sentences max in the body
-- Open directly (not "I am writing to express my interest...")
-- Mention one specific thing from the job or company that actually interests you
+- Do not start with the word "I" — open with a statement about the role or company, then bring in the applicant
+- Mention one specific thing from the job or company that actually interests you (from the JD, not generic)
 - Reference attached resume and cover letter
 - Match the language of the job posting ({language})
 - Sign off with the applicant's real name
+- Never use: "excited", "drawn to", "passion", "I am writing to", "seasoned", "leverage", "impactful", "team player", "fast learner", "dynamic", "synergy", "look forward to", "keen interest"
+- No filler enthusiasm. Sound like a real person who read the JD, not a template.
 
 Return JSON with exactly two fields: subject, body
 
