@@ -6,6 +6,7 @@ from db.database import get_session
 from db.models import Application, Job
 from generation.cover_letter import generate_cover_letter
 from generation.email_composer import compose_email
+from apply.engine import send_application
 
 router = APIRouter()
 
@@ -91,6 +92,37 @@ def update_email(app_id: int, email_body: str = Form(...),
         session.add(app)
         session.commit()
     return HTMLResponse("")
+
+
+@router.put("/review/{app_id}/recipient-email", response_class=HTMLResponse)
+def update_recipient_email(app_id: int, recipient_email: str = Form(...),
+                           session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if app:
+        app.recipient_email = recipient_email.strip() or None
+        session.add(app)
+        session.commit()
+    return HTMLResponse("")
+
+
+@router.post("/review/{app_id}/send", response_class=HTMLResponse)
+async def send_application_route(app_id: int, request: Request,
+                                 session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Not found", status_code=404)
+    if app.apply_status == "pending_review":
+        app.apply_status = "approved"
+        session.add(app)
+        session.commit()
+    result = await send_application(app_id)
+    if result["ok"]:
+        return HTMLResponse(
+            '<span class="text-green-600 text-sm font-medium">Sent!</span>',
+        )
+    return HTMLResponse(
+        f'<span class="text-red-500 text-sm">Failed: {result["error"]}</span>',
+    )
 
 
 @router.get("/review/{app_id}/download")

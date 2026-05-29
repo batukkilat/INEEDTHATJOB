@@ -107,6 +107,7 @@ class Application(SQLModel, table=True):
     email_subject: Optional[str] = None
     email_body: Optional[str] = None
     apply_method: Optional[str] = None
+    recipient_email: Optional[str] = None
     applied_at: Optional[str] = None
     apply_status: str = "pending_review"
     # pending_review → approved → submitting → submitted

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 import utils.logging  # noqa: F401 — configures structlog on import
 from config import settings
-from db.database import create_db_and_tables
+from db.database import create_db_and_tables, run_migrations
 from web.app import create_app
 
 
@@ -12,6 +12,7 @@ from web.app import create_app
 async def lifespan(app: FastAPI):
     settings.ensure_dirs()
     create_db_and_tables()
+    run_migrations()
     yield
 
 
