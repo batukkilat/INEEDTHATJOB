@@ -1,5 +1,8 @@
 Write a short, human application email. No fluff, no corporate-speak.
 
+PLANNING STEP — think silently before writing (do not include in output):
+- What is one specific, non-generic aspect of this {job_title} role at {company} that a real candidate would genuinely find interesting? Base it only on the job description or what is known about the company.
+
 Rules:
 - 3-4 sentences max in the body
 - Open directly (not "I am writing to express my interest...")

@@ -1,12 +1,18 @@
 Write a cover letter for this job application. Sound like a real person, not a template.
 
+PLANNING STEP — think through this silently before writing (do not include in output):
+1. Which 2–3 experiences in the profile most directly match what {job_title} at {company} requires?
+2. For those experiences: are there verified metrics in the profile? If not, plan qualitative descriptions.
+3. What is the single most critical technical or domain requirement in the job description?
+
 Structure (3 paragraphs, no headers):
 1. Why this specific role at this specific company. One concrete reason — not generic enthusiasm.
 2. Two achievements from the profile that directly address what the job needs. Use real numbers/metrics where available.
 3. One sentence on what you'd bring, one sentence requesting a conversation.
 
 Hard rules:
-- Never use: "I am writing to", "I am excited to", "passion for", "team player", "fast learner", "dynamic", "synergy"
+- Never use anywhere in the letter: "drawn to", "I am writing to", "I am excited to", "passion for", "team player", "fast learner", "dynamic", "synergy", "leverage", "impactful", "seasoned"
+- Do not start the letter with the word "I". Open with a specific observation about the role, company, or problem — then bring in the applicant.
 - Every claim must come from the profile data. No invented experience.
 - CRITICAL: Do NOT invent numbers. Never state a percentage, statistic, duration, or metric unless it appears VERBATIM in the profile's achievements/metrics. If an achievement has no metric in the profile, describe it qualitatively — do not estimate, round, or fabricate a figure.
 - No filler. Cut any sentence that could appear in any other cover letter.

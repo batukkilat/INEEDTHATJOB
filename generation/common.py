@@ -5,18 +5,30 @@ from pathlib import Path
 
 from sqlmodel import Session
 
+# ---------------------------------------------------------------------------
+# Relevance filtering
+# ---------------------------------------------------------------------------
+_STOP_WORDS = frozenset([
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
+    "have", "has", "had", "will", "would", "could", "should", "may", "might",
+    "this", "that", "these", "those", "we", "you", "our", "your", "their",
+])
+
 _PROMPT_DIR = Path("generation/prompts")
 
 # Leading conversational wrappers chatty models prepend (e.g. "Here's the cover letter:")
 _PREAMBLE_RE = re.compile(
     r"^\s*(here('?s| is)|sure|certainly|of course|absolutely|below is|"
-    r"i('?ve| have) (written|drafted|created|prepared)|i('?d| would) be happy)"
+    r"i('?ve| have) (written|drafted|created|prepared|revised|updated|rewritten)|"
+    r"i('?d| would) be happy|i('?ve| have) revised|i('?ve| have) rewritten)"
     r"[^\n]*?(:\s*\n|\.\s*\n|\n)",
     re.IGNORECASE,
 )
-# Trailing offers (e.g. "Let me know if you'd like any changes.")
+# Trailing offers or meta-commentary (e.g. "Let me know if you'd like any changes.")
 _POSTAMBLE_RE = re.compile(
-    r"\n+\s*(let me know|feel free|i hope this|hope this helps|please let me know)"
+    r"\n+\s*(let me know|feel free|i hope this|hope this helps|please let me know|"
+    r"i('?ve| have) (revised|updated|rewritten|removed|ensured|made sure))"
     r"[^\n]*$",
     re.IGNORECASE,
 )
@@ -49,6 +61,42 @@ def company_type(company: str) -> str:
     if any(w in company_lower for w in ["bank", "finance", "tbk", "pt."]):
         return "corporate"
     return "professional"
+
+
+def _token_overlap(a: str, b: str) -> float:
+    """Fraction of unique content words in `a` that appear in `b`."""
+    a_words = {w.lower() for w in re.findall(r"\w+", a) if w.lower() not in _STOP_WORDS and len(w) > 2}
+    b_lower = b.lower()
+    if not a_words:
+        return 0.0
+    return sum(1 for w in a_words if w in b_lower) / len(a_words)
+
+
+def filter_profile_for_job(profile: dict, job_description: str, top_skills: int = 10,
+                           top_experiences: int = 3) -> dict:
+    """Return a trimmed profile with only the most relevant skills and experiences for the job."""
+    jd = job_description.lower()
+
+    scored_skills = sorted(
+        profile.get("skills", []),
+        key=lambda s: _token_overlap(f"{s['name']} {s.get('keywords', '')}", jd),
+        reverse=True,
+    )
+
+    def _exp_score(exp: dict) -> float:
+        text = f"{exp['title']} {exp['description']} " + " ".join(
+            f"{a['description']} {a.get('skills_used', '')}"
+            for a in exp.get("achievements", [])
+        )
+        return _token_overlap(text, jd)
+
+    scored_exps = sorted(profile.get("experiences", []), key=_exp_score, reverse=True)
+
+    return {
+        **profile,
+        "skills": scored_skills[:top_skills],
+        "experiences": scored_exps[:top_experiences],
+    }
 
 
 def build_profile_json(session: Session) -> dict:
