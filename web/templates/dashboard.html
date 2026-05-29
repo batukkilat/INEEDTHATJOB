@@ -84,6 +84,33 @@
       </p>
     </div>
 
+    <!-- Groq Usage Meters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Groq Daily Usage</h2>
+      <div class="space-y-3">
+        {% for m in usage_meters %}
+        {% set color = "bg-red-500" if m.pct >= 90 else ("bg-yellow-400" if m.pct >= 70 else "bg-blue-500") %}
+        <div>
+          <div class="flex justify-between items-baseline mb-1">
+            <span class="text-xs font-medium text-gray-600 truncate" title="{{ m.model }}">{{ m.model }}</span>
+            <span class="text-xs text-gray-400 ml-2 whitespace-nowrap">
+              {{ "{:,}".format(m.used) }} / {{ "{:,}".format(m.limit) }} tok
+              {% if m.calls %}&middot; {{ m.calls }} call{{ "s" if m.calls != 1 }}{% endif %}
+            </span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full {{ color }} rounded-full transition-all duration-500"
+                 style="width: {{ m.pct }}%"></div>
+          </div>
+          {% if m.pct >= 90 %}
+          <p class="text-xs text-red-500 mt-0.5">{{ m.pct }}% — near limit</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <p class="text-xs text-gray-400 mt-3">Resets at midnight UTC. Override limits via <code class="font-mono">SCORING_MODEL_TPD</code> / <code class="font-mono">GENERATION_MODEL_TPD</code> in .env.</p>
+    </div>
+
     <!-- Activity feed -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
       <div class="flex items-center justify-between mb-3">

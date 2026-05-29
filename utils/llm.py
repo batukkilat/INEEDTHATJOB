@@ -53,7 +53,11 @@ def chat(model: str, messages: list[dict], system: str = "", max_tokens: int = 2
     data = _post({"model": model, "messages": msgs, "max_tokens": max_tokens,
                   "temperature": temperature})
     content = data["choices"][0]["message"]["content"]
-    log.info("llm_call", model=model, tokens=data.get("usage", {}).get("completion_tokens"))
+    usage = data.get("usage", {})
+    log.info("llm_call", model=model, tokens=usage.get("completion_tokens"))
+    if usage:
+        from utils import usage_tracker
+        usage_tracker.record(model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0))
     return content
 
 
@@ -87,7 +91,11 @@ def chat_with_tool(model: str, messages: list[dict], tool_name: str, tool_schema
         log.warning("tool_call_parse_failed", response=failed[:200])
         return {}
 
-    log.info("llm_tool_call", model=model, tool=tool_name, tokens=data.get("usage", {}).get("completion_tokens"))
+    tool_usage = data.get("usage", {})
+    log.info("llm_tool_call", model=model, tool=tool_name, tokens=tool_usage.get("completion_tokens"))
+    if tool_usage:
+        from utils import usage_tracker
+        usage_tracker.record(model, tool_usage.get("prompt_tokens", 0), tool_usage.get("completion_tokens", 0))
 
     msg = data["choices"][0]["message"]
     tool_calls = msg.get("tool_calls", [])

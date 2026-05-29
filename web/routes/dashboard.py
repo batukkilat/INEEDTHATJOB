@@ -4,9 +4,18 @@ from web.templates_env import templates
 from sqlmodel import Session, select, func
 from db.database import get_session
 from db.models import Job, Application, ActivityLog
+from config import settings
+from utils import usage_tracker
 import pipeline as pipe
 
 router = APIRouter()
+
+
+def _usage_meter(model: str, limit: int, today: dict) -> dict:
+    entry = today.get(model, {})
+    used = entry.get("prompt_tokens", 0) + entry.get("completion_tokens", 0)
+    pct = min(100, round(used / limit * 100, 1)) if limit else 0
+    return {"model": model, "used": used, "limit": limit, "calls": entry.get("calls", 0), "pct": pct}
 
 
 
@@ -41,6 +50,12 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         .limit(20)
     ).all())
 
+    today_usage = usage_tracker.get_today()
+    usage_meters = [
+        _usage_meter(settings.scoring_model, settings.scoring_model_tpd, today_usage),
+        _usage_meter(settings.generation_model, settings.generation_model_tpd, today_usage),
+    ]
+
     return templates.TemplateResponse(request, "dashboard.html", {
         "current_page": "dashboard",
         "total_jobs": total_jobs,
@@ -53,4 +68,5 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         "recent_jobs": recent_jobs,
         "stage": pipe.current_stage(),
         "is_running": pipe.is_running(),
+        "usage_meters": usage_meters,
     })

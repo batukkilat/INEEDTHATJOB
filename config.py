@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     scoring_model: str = "llama-3.1-8b-instant"
     generation_model: str = "llama-3.3-70b-versatile"
+    # Daily token limits (Groq free tier defaults — override in .env if on paid plan)
+    scoring_model_tpd: int = 500_000
+    generation_model_tpd: int = 100_000
 
     # Scraping
     scrape_platforms: str = '["linkedin", "glints", "jobstreet"]'
