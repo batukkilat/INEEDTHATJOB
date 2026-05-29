@@ -8,7 +8,7 @@ from config import settings
 from db.database import engine
 from db.models import Job, Application, ActivityLog, Preferences
 from generation.resume import generate_resume
-from generation.common import build_profile_json
+from generation.common import build_profile_json, extract_contact_email
 from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scorer import score_job, title_matches_roles
 from jobs.service import upsert_job
@@ -171,6 +171,7 @@ async def _generate_phase(session: Session) -> int:
                 job_id=job.id,
                 resume_path=docx_path,
                 resume_content=json.dumps(resume_content),
+                recipient_email=extract_contact_email(job.description),
                 apply_status="pending_review",
                 created_at=_now(),
             )

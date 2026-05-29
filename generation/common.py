@@ -34,6 +34,28 @@ _POSTAMBLE_RE = re.compile(
 )
 
 
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+
+# Patterns that indicate a "send resume here" context — prioritised over bare emails
+_EMAIL_CONTEXT_RE = re.compile(
+    r"(?:kirim|send|email|apply|lamaran|cv|resume).{0,60}?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})",
+    re.IGNORECASE,
+)
+
+
+def extract_contact_email(text: str) -> str | None:
+    """Return the most likely HR/application email from job description text, or None."""
+    if not text:
+        return None
+    # Prefer emails near application-context keywords
+    m = _EMAIL_CONTEXT_RE.search(text)
+    if m:
+        return m.group(1)
+    # Fall back to first email found anywhere
+    m = _EMAIL_RE.search(text)
+    return m.group(0) if m else None
+
+
 @lru_cache(maxsize=None)
 def load_prompt(filename: str) -> str:
     return (_PROMPT_DIR / filename).read_text()
