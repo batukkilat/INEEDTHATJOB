@@ -16,16 +16,33 @@
     class="w-full text-sm text-gray-700 leading-relaxed p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y mb-3">{{ app.email_body }}</textarea>
 
   <!-- Recipient + send -->
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 flex-wrap">
     <input
       type="email"
       name="recipient_email"
       value="{{ app.recipient_email or '' }}"
-      placeholder="{% if app.email_body and not app.recipient_email and not email_searched %}Searching job description…{% else %}Enter HR email manually{% endif %}"
+      placeholder="Enter HR email"
       hx-put="/review/{{ app.id }}/recipient-email"
       hx-trigger="blur"
       hx-swap="none"
-      class="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300">
+      class="flex-1 min-w-0 px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300">
+
+    {% if not app.recipient_email %}
+    <button
+      hx-post="/review/{{ app.id }}/detect-email"
+      hx-target="#email-{{ app.id }}"
+      hx-swap="outerHTML"
+      hx-disabled-elt="this"
+      class="btn btn-secondary btn-sm disabled:opacity-50 disabled:cursor-wait whitespace-nowrap">
+      Find HR email
+      <span class="htmx-indicator">…</span>
+    </button>
+    {% endif %}
+
+    {% if detect_failed %}
+    <span class="text-xs text-gray-400 w-full">No email found in job description.</span>
+    {% endif %}
+
     <button
       hx-post="/review/{{ app.id }}/send"
       hx-target="#send-status-{{ app.id }}"

@@ -6,7 +6,7 @@ from db.database import get_session
 from db.models import Application, Job
 from generation.cover_letter import generate_cover_letter
 from generation.email_composer import compose_email
-from generation.common import extract_contact_email
+from generation.common import extract_contact_email, extract_contact_email_llm
 from apply.engine import send_application
 
 router = APIRouter()
@@ -113,6 +113,23 @@ def suggest_recipient_email(app_id: int, request: Request,
 
     return templates.TemplateResponse(request, "partials/email_block.html",
                                       {"app": app, "email_searched": True})
+
+
+@router.post("/review/{app_id}/detect-email", response_class=HTMLResponse)
+async def detect_recipient_email(app_id: int, request: Request,
+                                 session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Not found", status_code=404)
+    job = session.get(Job, app.job_id)
+    email = await extract_contact_email_llm(job) if job else None
+    if email:
+        app.recipient_email = email
+        session.add(app)
+        session.commit()
+    return templates.TemplateResponse(request, "partials/email_block.html",
+                                      {"app": app, "email_searched": True,
+                                       "detect_failed": not email})
 
 
 @router.put("/review/{app_id}/recipient-email", response_class=HTMLResponse)
