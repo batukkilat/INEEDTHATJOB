@@ -12,6 +12,8 @@ from generation.common import build_profile_json, extract_contact_email, extract
 from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scrapers.glints import GlintsScraper
 from jobs.scrapers.jobstreet import JobStreetScraper
+from jobs.scrapers.x import XScraper
+from jobs.scrapers.threads import ThreadsScraper
 from jobs.scorer import score_job, title_matches_roles
 from jobs.service import upsert_job
 from utils.logging import get_logger
@@ -69,6 +71,8 @@ _SCRAPER_MAP = {
     "linkedin": LinkedInScraper,
     "glints": GlintsScraper,
     "jobstreet": JobStreetScraper,
+    "x": XScraper,
+    "threads": ThreadsScraper,
 }
 
 

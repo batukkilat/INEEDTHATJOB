@@ -25,11 +25,11 @@
 
       <!-- Platform selector -->
       <div class="flex gap-4 mb-3">
-        {% for name in ["linkedin", "glints", "jobstreet"] %}
+        {% for name in ["linkedin", "glints", "jobstreet", "x", "threads"] %}
         <label class="flex items-center gap-1.5 text-sm">
           <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
                  checked class="rounded border-gray-300">
-          {{ name | capitalize }}
+          {% if name == "x" %}X (Twitter){% elif name == "threads" %}Threads{% else %}{{ name | capitalize }}{% endif %}
         </label>
         {% endfor %}
       </div>
