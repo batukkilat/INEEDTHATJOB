@@ -25,15 +25,11 @@
 
       <!-- Platform selector -->
       <div class="flex gap-4 mb-3">
-        {% set platforms_available = [("linkedin", true), ("glints", false), ("jobstreet", false)] %}
-        {% for name, available in platforms_available %}
-        <label class="flex items-center gap-1.5 text-sm {% if not available %}opacity-40{% endif %}">
+        {% for name in ["linkedin", "glints", "jobstreet"] %}
+        <label class="flex items-center gap-1.5 text-sm">
           <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
-                 {% if available %}checked{% endif %}
-                 {% if not available %}disabled{% endif %}
-                 class="rounded border-gray-300">
+                 checked class="rounded border-gray-300">
           {{ name | capitalize }}
-          {% if not available %}<span class="text-xs text-gray-400">(soon)</span>{% endif %}
         </label>
         {% endfor %}
       </div>
