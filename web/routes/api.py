@@ -55,7 +55,8 @@ def pipeline_run(
 ):
     if pipe.is_running():
         return HTMLResponse(_progress(60, "Already running…"))
-    active = [p for p in platforms if p in ("linkedin",)]  # only built scrapers
+    known = {"linkedin", "glints", "jobstreet", "x", "threads"}
+    active = [p for p in platforms if p in known]
     if not active:
         active = ["linkedin"]
     background_tasks.add_task(_run_pipeline_bg, active)
