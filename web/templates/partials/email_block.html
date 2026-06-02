@@ -1,4 +1,10 @@
-<div id="email-{{ app.id }}" class="p-5">
+<div id="email-{{ app.id }}" class="p-5"
+  {% if app.email_body and not app.recipient_email %}
+  hx-post="/review/{{ app.id }}/suggest-email"
+  hx-trigger="load"
+  hx-target="#email-{{ app.id }}"
+  hx-swap="outerHTML"
+  {% endif %}>
   <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Application Email</p>
   {% if app.email_body %}
   <p class="text-xs text-gray-500 mb-1">Subject: <span class="font-medium text-gray-700">{{ app.email_subject }}</span></p>
@@ -15,11 +21,12 @@
       type="email"
       name="recipient_email"
       value="{{ app.recipient_email or '' }}"
-      placeholder="HR email (e.g. careers@company.com)"
+      placeholder="{% if not app.recipient_email %}Detecting…{% else %}HR email{% endif %}"
       hx-put="/review/{{ app.id }}/recipient-email"
       hx-trigger="blur"
       hx-swap="none"
-      class="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300">
+      class="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300
+             {% if not app.recipient_email %}border-dashed{% endif %}">
     <button
       hx-post="/review/{{ app.id }}/send"
       hx-target="#send-status-{{ app.id }}"

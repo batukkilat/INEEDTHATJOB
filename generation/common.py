@@ -47,13 +47,63 @@ def extract_contact_email(text: str) -> str | None:
     """Return the most likely HR/application email from job description text, or None."""
     if not text:
         return None
-    # Prefer emails near application-context keywords
     m = _EMAIL_CONTEXT_RE.search(text)
     if m:
         return m.group(1)
-    # Fall back to first email found anywhere
     m = _EMAIL_RE.search(text)
     return m.group(0) if m else None
+
+
+async def extract_contact_email_llm(job) -> str | None:
+    """Use LLM to extract or infer the HR contact email from job metadata.
+
+    Falls back gracefully — returns None if LLM can't determine a real email.
+    Skips noreply/automated addresses.
+    """
+    from utils.llm import chat
+    from config import settings
+
+    description = (job.description or "")[:3000]
+    company = job.company or ""
+    url = job.url or ""
+
+    prompt = (
+        f"Job title: {job.title}\n"
+        f"Company: {company}\n"
+        f"Job URL: {url}\n\n"
+        f"Job description (truncated):\n{description}\n\n"
+        "Task: Extract the email address where job applications should be sent. "
+        "Look for phrases like 'kirim lamaran', 'send your CV', 'email to', 'apply by emailing', "
+        "or any explicit application email address.\n"
+        "Rules:\n"
+        "- Return ONLY the raw email address, nothing else.\n"
+        "- If no clear application email exists, return the single word: null\n"
+        "- Never invent or guess an email — only return one explicitly stated in the text.\n"
+        "- Reject noreply@, no-reply@, donotreply@ addresses.\n"
+        "Output (email address or 'null'):"
+    )
+
+    try:
+        result = chat(
+            model=settings.scoring_model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=64,
+            temperature=0,
+        ).strip().lower()
+
+        if result == "null" or not result or "@" not in result:
+            return None
+        # Validate looks like an email
+        m = _EMAIL_RE.search(result)
+        if not m:
+            return None
+        email = m.group(0)
+        # Reject noreply patterns
+        if any(p in email for p in ("noreply", "no-reply", "donotreply", "notifications")):
+            return None
+        return email
+    except Exception:
+        return None
 
 
 @lru_cache(maxsize=None)

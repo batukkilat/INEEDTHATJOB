@@ -8,7 +8,7 @@ from config import settings
 from db.database import engine
 from db.models import Job, Application, ActivityLog, Preferences
 from generation.resume import generate_resume
-from generation.common import build_profile_json, extract_contact_email
+from generation.common import build_profile_json, extract_contact_email, extract_contact_email_llm
 from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scrapers.glints import GlintsScraper
 from jobs.scrapers.jobstreet import JobStreetScraper
@@ -175,11 +175,15 @@ async def _generate_phase(session: Session) -> int:
             # on demand from the review page to save tokens on jobs the user skips.
             docx_path, resume_content = await generate_resume(job, session, profile)
 
+            recipient_email = extract_contact_email(job.description)
+            if not recipient_email:
+                recipient_email = await extract_contact_email_llm(job)
+
             app = Application(
                 job_id=job.id,
                 resume_path=docx_path,
                 resume_content=json.dumps(resume_content),
-                recipient_email=extract_contact_email(job.description),
+                recipient_email=recipient_email,
                 apply_status="pending_review",
                 created_at=_now(),
             )
