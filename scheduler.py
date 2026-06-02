@@ -28,7 +28,7 @@ async def _run_pipeline_job() -> None:
 
 
 def _add_pipeline_job() -> None:
-    if _scheduler is None:
+    if not (_scheduler and _scheduler.running):
         return
     _scheduler.add_job(
         _run_pipeline_job,
@@ -59,13 +59,10 @@ def set_enabled(enabled: bool) -> None:
     global _enabled_override
     _enabled_override = enabled
     if enabled:
-        if _scheduler and _scheduler.running:
-            _add_pipeline_job()
-        else:
+        if not (_scheduler and _scheduler.running):
             start_scheduler()
     else:
-        if _scheduler and _scheduler.running:
-            _scheduler.remove_all_jobs()
+        stop_scheduler()
     log.info("scheduler_toggled", enabled=enabled)
 
 

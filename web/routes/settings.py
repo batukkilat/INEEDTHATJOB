@@ -59,7 +59,7 @@ def save_preferences(
 
 
 @router.post("/schedule/toggle", response_class=HTMLResponse)
-def toggle_schedule(request: Request, session: Session = Depends(get_session)):
+async def toggle_schedule(request: Request, session: Session = Depends(get_session)):
     current = sched.get_status()["enabled"]
     sched.set_enabled(not current)
     return templates.TemplateResponse(request, "partials/schedule_card.html",
@@ -67,7 +67,7 @@ def toggle_schedule(request: Request, session: Session = Depends(get_session)):
 
 
 @router.post("/schedule/cron", response_class=HTMLResponse)
-def update_cron(
+async def update_cron(
     request: Request,
     cron: str = Form(...),
     session: Session = Depends(get_session),
