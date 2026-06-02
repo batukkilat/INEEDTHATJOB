@@ -37,11 +37,40 @@ def approve_application(app_id: int, session: Session = Depends(get_session)):
     return HTMLResponse("")
 
 
+@router.get("/review/{app_id}/reject-options", response_class=HTMLResponse)
+def reject_options(app_id: int, request: Request):
+    return templates.TemplateResponse(request, "partials/reject_options.html",
+                                      {"app_id": app_id})
+
+
+@router.get("/review/{app_id}/header-actions", response_class=HTMLResponse)
+def header_actions(app_id: int, request: Request, session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    job = session.get(Job, app.job_id) if app else None
+    return templates.TemplateResponse(request, "partials/review_header_actions.html",
+                                      {"app": app, "job": job})
+
+
 @router.post("/review/{app_id}/reject", response_class=HTMLResponse)
-def reject_application(app_id: int, session: Session = Depends(get_session)):
+def reject_application(app_id: int, reason: str = Form(""),
+                       session: Session = Depends(get_session)):
     app = session.get(Application, app_id)
     if app:
         app.apply_status = "rejected"
+        app.skip_reason = reason.strip() or None
+        session.add(app)
+        session.commit()
+    return HTMLResponse("")
+
+
+@router.post("/review/{app_id}/apply-manual", response_class=HTMLResponse)
+def apply_manual(app_id: int, session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if app:
+        from datetime import datetime, timezone
+        app.apply_status = "applied_manually"
+        app.applied_at = datetime.now(timezone.utc).isoformat()
+        app.skip_reason = "applied via platform URL"
         session.add(app)
         session.commit()
     return HTMLResponse("")

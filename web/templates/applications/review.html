@@ -50,21 +50,7 @@
           </p>
           {% if job %}<a href="{{ job.url }}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">View posting ↗</a>{% endif %}
         </div>
-        <div class="flex gap-2 flex-shrink-0">
-          {% if app.resume_path %}
-          <a href="/review/{{ app.id }}/download" class="btn btn-secondary btn-sm">↓ Resume</a>
-          {% endif %}
-          <button
-            hx-post="/review/{{ app.id }}/approve"
-            hx-target="#app-{{ app.id }}"
-            hx-swap="outerHTML"
-            class="btn btn-primary btn-sm">Approve</button>
-          <button
-            hx-post="/review/{{ app.id }}/reject"
-            hx-target="#app-{{ app.id }}"
-            hx-swap="outerHTML"
-            class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">Skip</button>
-        </div>
+        {% include "partials/review_header_actions.html" %}
       </div>
 
       <!-- Resume preview -->

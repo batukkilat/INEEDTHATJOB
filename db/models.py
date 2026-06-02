@@ -112,7 +112,9 @@ class Application(SQLModel, table=True):
     apply_status: str = "pending_review"
     # pending_review → approved → submitting → submitted
     #                → rejected (user skipped)
+    #                → applied_manually (user applied via platform URL)
     #                → failed (automation error)
+    skip_reason: Optional[str] = None
     error_log: Optional[str] = None
     screenshot_path: Optional[str] = None
     created_at: str

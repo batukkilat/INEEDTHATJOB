@@ -19,6 +19,8 @@ def run_migrations() -> None:
     existing = {row[1] for row in cur.execute("PRAGMA table_info(application)")}
     if "recipient_email" not in existing:
         cur.execute("ALTER TABLE application ADD COLUMN recipient_email TEXT")
+    if "skip_reason" not in existing:
+        cur.execute("ALTER TABLE application ADD COLUMN skip_reason TEXT")
     conn.commit()
     conn.close()
 
