@@ -135,11 +135,93 @@ def _extract_docx(content: bytes) -> str:
 
 def parse_resume(text: str) -> dict:
     log.info("resume_parse_start", chars=len(text))
-    result = parse_resume_text(text)
+    result = _parse_with_llm(text)
+    if not result.get("experiences") and not result.get("skills"):
+        log.warning("llm_parse_empty_fallback_to_rules")
+        result = parse_resume_text(text)
+    # Second pass: extract certifications from tail (often cut off in first pass)
+    if len(text) > 4500:
+        tail_certs = _extract_certs_llm(text[4000:])
+        if tail_certs:
+            existing_names = {c.get("name", "").lower() for c in (result.get("certifications") or [])}
+            for c in tail_certs:
+                if c.get("name", "").lower() not in existing_names:
+                    result.setdefault("certifications", []).append(c)
+                    existing_names.add(c.get("name", "").lower())
     log.info("resume_parse_done",
-             skills=len(result.get("skills", [])),
-             experiences=len(result.get("experiences", [])))
+             skills=len(result.get("skills") or []),
+             experiences=len(result.get("experiences") or []),
+             certifications=len(result.get("certifications") or []))
     return result
+
+
+def _parse_with_llm(text: str) -> dict:
+    from utils.llm import chat, extract_json
+    from config import settings
+
+    system = "You are a resume parser. Output only valid JSON, no prose."
+    prompt = (
+        "Parse this resume into JSON with keys: "
+        "skills (array of {name, category, keywords}), "
+        "experiences (array of {company, title, start_date, end_date, location, description, achievements: [{description}]}), "
+        "education (array of {institution, degree, field, start_date, end_date, gpa}), "
+        "certifications (array of {name, issuer, date_obtained}), "
+        "projects (array of {name, description, skills_used}).\n"
+        "- category must be one of: technical, soft, domain, language\n"
+        "- Include up to 5 bullet points per job as achievement entries\n"
+        "- Include all roles including internships\n"
+        "- Extract all certifications/training\n\n"
+        f"Resume:\n{text[:5000]}"
+    )
+    try:
+        raw = chat(
+            model=settings.generation_model,
+            messages=[{"role": "user", "content": prompt}],
+            system=system,
+            max_tokens=4096,
+            temperature=0,
+        )
+        result = extract_json(raw)
+        if not isinstance(result, dict):
+            return {}
+        for key in ("skills", "experiences", "education", "certifications", "projects"):
+            if result.get(key) is None:
+                result[key] = []
+        return result
+    except Exception as e:
+        log.error("llm_resume_parse_failed", error=str(e))
+        return {}
+
+
+def _extract_certs_llm(tail: str) -> list[dict]:
+    from utils.llm import chat, extract_json
+    from config import settings
+
+    prompt = (
+        "Extract certifications and training from this resume section. "
+        "Return JSON array: [{\"name\": ..., \"issuer\": ..., \"date_obtained\": \"YYYY-MM-DD or null\"}]. "
+        "Return [] if none found.\n\n"
+        f"Text:\n{tail[:3000]}"
+    )
+    try:
+        raw = chat(
+            model=settings.scoring_model,
+            messages=[{"role": "user", "content": prompt}],
+            system="Output only valid JSON array, no prose.",
+            max_tokens=1000,
+            temperature=0,
+        )
+        data = extract_json(raw)
+        if isinstance(data, list):
+            return data
+        # extract_json finds first {}, but we want []. Try direct parse.
+        import json, re
+        m = re.search(r"\[.*\]", raw, re.DOTALL)
+        if m:
+            return json.loads(m.group(0))
+    except Exception as e:
+        log.debug("cert_extract_failed", error=str(e))
+    return []
 
 
 def save_to_profile(session: Session, parsed: dict) -> dict:
