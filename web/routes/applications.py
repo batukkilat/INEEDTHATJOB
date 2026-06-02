@@ -6,7 +6,7 @@ from db.database import get_session
 from db.models import Application, Job
 from generation.cover_letter import generate_cover_letter
 from generation.email_composer import compose_email
-from generation.common import extract_contact_email, extract_contact_email_llm
+from generation.common import extract_contact_email
 from apply.engine import send_application
 
 router = APIRouter()
@@ -96,18 +96,15 @@ def update_email(app_id: int, email_body: str = Form(...),
 
 
 @router.post("/review/{app_id}/suggest-email", response_class=HTMLResponse)
-async def suggest_recipient_email(app_id: int, request: Request,
-                                  session: Session = Depends(get_session)):
+def suggest_recipient_email(app_id: int, request: Request,
+                            session: Session = Depends(get_session)):
     app = session.get(Application, app_id)
     if not app:
         return HTMLResponse("Not found", status_code=404)
     job = session.get(Job, app.job_id)
 
-    # Try regex first (fast, free)
+    # Regex only — LLM extraction runs in the pipeline (paced), not here
     email = extract_contact_email(job.description if job else "")
-    # Fall back to LLM extraction
-    if not email and job:
-        email = await extract_contact_email_llm(job)
 
     if email:
         app.recipient_email = email
