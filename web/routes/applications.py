@@ -114,7 +114,8 @@ async def suggest_recipient_email(app_id: int, request: Request,
         session.add(app)
         session.commit()
 
-    return templates.TemplateResponse(request, "partials/email_block.html", {"app": app})
+    return templates.TemplateResponse(request, "partials/email_block.html",
+                                      {"app": app, "email_searched": True})
 
 
 @router.put("/review/{app_id}/recipient-email", response_class=HTMLResponse)
