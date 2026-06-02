@@ -10,6 +10,8 @@ from db.models import Job, Application, ActivityLog, Preferences
 from generation.resume import generate_resume
 from generation.common import build_profile_json, extract_contact_email
 from jobs.scrapers.linkedin import LinkedInScraper
+from jobs.scrapers.glints import GlintsScraper
+from jobs.scrapers.jobstreet import JobStreetScraper
 from jobs.scorer import score_job, title_matches_roles
 from jobs.service import upsert_job
 from utils.logging import get_logger
@@ -65,6 +67,8 @@ def _get_keywords(session: Session) -> list[str]:
 
 _SCRAPER_MAP = {
     "linkedin": LinkedInScraper,
+    "glints": GlintsScraper,
+    "jobstreet": JobStreetScraper,
 }
 
 
@@ -104,12 +108,16 @@ async def _scrape_phase(session: Session, max_pages: int, platforms: list[str]) 
 
 async def _fetch_descriptions(session: Session, jobs: list[Job]) -> None:
     """Fetch full descriptions for new jobs that don't have one yet."""
-    scraper = LinkedInScraper()
     needs_desc = [j for j in jobs if j.status == "new" and not j.description and j.external_id]
-
     log.info("pipeline_fetch_descriptions", count=len(needs_desc))
+    scrapers: dict = {}
     for job in needs_desc:
-        desc = await scraper.fetch_description(job.external_id)
+        cls = _SCRAPER_MAP.get(job.platform)
+        if not cls:
+            continue
+        if job.platform not in scrapers:
+            scrapers[job.platform] = cls()
+        desc = await scrapers[job.platform].fetch_description(job.external_id)
         if desc:
             job.description = desc
             session.add(job)

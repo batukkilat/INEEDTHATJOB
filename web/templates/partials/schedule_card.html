@@ -1,0 +1,37 @@
+<div id="schedule-card" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Auto-Schedule</h2>
+    <button
+      hx-post="/settings/schedule/toggle"
+      hx-target="#schedule-card"
+      hx-swap="outerHTML"
+      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+             {% if schedule_status.enabled %}bg-blue-600{% else %}bg-gray-300{% endif %}">
+      <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                   {% if schedule_status.enabled %}translate-x-6{% else %}translate-x-1{% endif %}"></span>
+    </button>
+  </div>
+
+  {% if schedule_status.enabled %}
+  <div class="space-y-3">
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">Cron expression</label>
+      <form hx-post="/settings/schedule/cron" hx-target="#schedule-card" hx-swap="outerHTML"
+            class="flex gap-2">
+        <input type="text" name="cron" value="{{ schedule_status.cron }}"
+               placeholder="0 9 * * 1-5"
+               class="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-md
+                      focus:outline-none focus:ring-1 focus:ring-blue-300 font-mono">
+        <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+      </form>
+      <p class="text-xs text-gray-400 mt-1">Default: <code>0 9 * * 1-5</code> = 9 AM Mon–Fri</p>
+    </div>
+    {% if schedule_status.next_run %}
+    <p class="text-xs text-gray-500">Next run: <span class="font-medium text-gray-700">{{ schedule_status.next_run[:19] | replace("T", " ") }} UTC</span></p>
+    {% endif %}
+    <p class="text-xs text-green-600 font-medium">● Scheduler running</p>
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400">Pipeline runs manually only. Toggle to enable cron schedule.</p>
+  {% endif %}
+</div>
