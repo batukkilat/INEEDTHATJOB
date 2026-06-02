@@ -3,14 +3,11 @@
   <a href="/review/{{ app.id }}/download" class="btn btn-secondary btn-sm">↓ Resume</a>
   {% endif %}
   {% if job %}
-  <a href="{{ job.url }}" target="_blank"
-     hx-post="/review/{{ app.id }}/apply-manual"
-     hx-target="#app-{{ app.id }}"
-     hx-swap="outerHTML"
-     hx-trigger="click"
-     class="btn btn-sm border border-blue-200 text-blue-600 hover:bg-blue-50">
+  <button
+    onclick="window.open('{{ job.url }}', '_blank'); htmx.ajax('POST', '/review/{{ app.id }}/apply-manual', {target: '#app-{{ app.id }}', swap: 'outerHTML'})"
+    class="btn btn-sm border border-blue-200 text-blue-600 hover:bg-blue-50">
     Apply via Platform ↗
-  </a>
+  </button>
   {% endif %}
   <button
     hx-post="/review/{{ app.id }}/approve"
