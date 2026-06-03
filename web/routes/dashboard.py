@@ -120,3 +120,13 @@ def dashboard(request: Request, session: Session = Depends(get_session)):
         "usage_meters": usage_meters,
         "ai_pct": ai_pct,
     })
+
+
+@router.get("/ai-usage", response_class=HTMLResponse)
+def ai_usage_partial(request: Request):
+    today_usage = usage_tracker.get_today()
+    usage_meters = [
+        _usage_meter(settings.scoring_model, settings.scoring_model_tpd, today_usage),
+        _usage_meter(settings.generation_model, settings.generation_model_tpd, today_usage),
+    ]
+    return templates.TemplateResponse(request, "partials/ai_usage.html", {"usage_meters": usage_meters})
