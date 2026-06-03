@@ -32,6 +32,7 @@
     <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-blue-500">
       <a href="#installation"    class="hover:underline">① Installation</a>
       <a href="#first-setup"     class="hover:underline">② First-time setup</a>
+      <a href="#cookies"         class="hover:underline text-xs text-blue-400 pl-3">↳ Platform cookies</a>
       <a href="#how-it-works"    class="hover:underline">③ How the pipeline works</a>
       <a href="#pages"           class="hover:underline">④ Page-by-page guide</a>
       <a href="#scores"          class="hover:underline">⑤ Understanding match scores</a>
@@ -198,6 +199,82 @@
           <p class="font-semibold text-gray-800">Configure email → <a href="/settings" class="text-blue-500 hover:underline">Settings → Email (SMTP)</a></p>
           <p class="text-gray-500 mt-0.5">Needed only to actually send applications. Use the Setup Guide inside the SMTP section for step-by-step instructions. You can skip this and apply manually if you prefer.</p>
         </div>
+      </div>
+
+      <div class="card p-4 flex gap-4">
+        <span class="w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">D</span>
+        <div class="text-sm">
+          <p class="font-semibold text-gray-800">Add platform cookies → <a href="/settings#cookies" class="text-blue-500 hover:underline">Settings → Platform Cookies</a></p>
+          <p class="text-gray-500 mt-0.5">The scraper browses job sites as you — it needs your login session. See below for how to get these.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Cookies how-to -->
+  <section id="cookies" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20" class="text-blue-500"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" /></svg>
+      How to get platform cookies
+    </h2>
+    <p class="text-sm text-gray-600 mb-4">A session cookie is proof that you're logged in. The scraper uses it to fetch job listings as if you were browsing normally. You grab it once from your browser — it takes about 2 minutes per platform.</p>
+
+    <div class="card p-5 mb-4 bg-amber-50 border border-amber-200 text-sm text-amber-800">
+      <p class="font-semibold mb-1">Do this while logged in</p>
+      <p>You must be logged into the platform in your browser first. The cookie is only there after login.</p>
+    </div>
+
+    <div class="space-y-4">
+
+      <!-- Step-by-step (applies to all) -->
+      <div class="card p-5">
+        <p class="font-semibold text-gray-800 text-sm mb-3">General steps (works for all three platforms)</p>
+        <ol class="text-sm text-gray-600 space-y-2 list-decimal pl-5">
+          <li>Open the platform site in your browser (LinkedIn, Glints, or JobStreet) and log in.</li>
+          <li>Press <kbd class="bg-gray-100 border border-gray-300 rounded px-1 text-xs font-mono">F12</kbd> to open DevTools (or right-click → Inspect).</li>
+          <li>Click the <strong>Application</strong> tab (Chrome/Edge) or <strong>Storage</strong> tab (Firefox).</li>
+          <li>In the left sidebar: <strong>Cookies</strong> → click the site URL.</li>
+          <li>Find the cookie name in the table below, click its row, and copy the <strong>Value</strong> column.</li>
+          <li>Paste it into <a href="/settings" class="text-blue-500 hover:underline">Settings → Platform Cookies</a>.</li>
+        </ol>
+      </div>
+
+      <!-- Per-platform cookie names -->
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+            <tr>
+              <th class="text-left px-4 py-2.5 font-medium">Platform</th>
+              <th class="text-left px-4 py-2.5 font-medium">Cookie name to copy</th>
+              <th class="text-left px-4 py-2.5 font-medium">Site to open</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium text-gray-800">LinkedIn</td>
+              <td class="px-4 py-3"><code class="bg-gray-100 rounded px-1 text-xs">li_at</code></td>
+              <td class="px-4 py-3 text-gray-500">linkedin.com</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium text-gray-800">Glints</td>
+              <td class="px-4 py-3"><code class="bg-gray-100 rounded px-1 text-xs">token</code></td>
+              <td class="px-4 py-3 text-gray-500">glints.com</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium text-gray-800">JobStreet</td>
+              <td class="px-4 py-3"><code class="bg-gray-100 rounded px-1 text-xs">JobseekerSessionToken</code></td>
+              <td class="px-4 py-3 text-gray-500">id.jobstreet.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card p-4 text-xs text-gray-500 leading-relaxed">
+        <p class="font-semibold text-gray-700 mb-1">Do cookies expire?</p>
+        <p>Yes — usually after 30–90 days, or when you log out. If scraping stops working, refresh your cookies here. The app will show "0 listings found" if a cookie has expired.</p>
+        <p class="mt-2 font-semibold text-gray-700">Is this safe?</p>
+        <p>Cookies are saved only to <code class="bg-gray-100 rounded px-0.5">.env</code> on your computer. They never leave your machine.</p>
       </div>
 
     </div>

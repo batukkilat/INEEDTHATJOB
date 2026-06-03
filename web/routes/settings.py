@@ -27,6 +27,11 @@ def _settings_ctx(request: Request, session: Session, **extra) -> dict:
             "from_name": app_settings.from_name,
             "configured": bool(app_settings.smtp_user and app_settings.smtp_password),
         },
+        "cookies_config": {
+            "linkedin": bool(app_settings.linkedin_session_cookie),
+            "glints": bool(app_settings.glints_session_cookie),
+            "jobstreet": bool(app_settings.jobstreet_session_cookie),
+        },
         **extra,
     }
 
@@ -163,6 +168,31 @@ async def smtp_test(to: str = Form(...)):
     except Exception as e:
         log.error("smtp_test_failed", error=str(e))
         return HTMLResponse(f'<span class="text-red-500 text-sm">Failed: {e}</span>')
+
+
+@router.post("/cookies/save", response_class=HTMLResponse)
+async def cookies_save(
+    request: Request,
+    session: Session = Depends(get_session),
+    linkedin_cookie: str = Form(""),
+    glints_cookie: str = Form(""),
+    jobstreet_cookie: str = Form(""),
+):
+    updates = {}
+    if linkedin_cookie.strip():
+        updates["LINKEDIN_SESSION_COOKIE"] = linkedin_cookie.strip()
+        app_settings.linkedin_session_cookie = linkedin_cookie.strip()
+    if glints_cookie.strip():
+        updates["GLINTS_SESSION_COOKIE"] = glints_cookie.strip()
+        app_settings.glints_session_cookie = glints_cookie.strip()
+    if jobstreet_cookie.strip():
+        updates["JOBSTREET_SESSION_COOKIE"] = jobstreet_cookie.strip()
+        app_settings.jobstreet_session_cookie = jobstreet_cookie.strip()
+    if updates:
+        _update_env_file(updates)
+    log.info("cookies_updated", platforms=list(updates.keys()))
+    return templates.TemplateResponse(request, "settings.html",
+                                      _settings_ctx(request, session, cookies_saved=True))
 
 
 @router.post("/schedule/toggle", response_class=HTMLResponse)
