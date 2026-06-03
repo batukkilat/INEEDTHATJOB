@@ -1,0 +1,46 @@
+{% if app.resume_content %}
+{% set rc = app.resume_content | fromjson %}
+<div id="resume-preview-{{ app.id }}" class="p-5 border-b border-gray-100 bg-gray-50">
+  <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Resume Preview</p>
+  {% if rc.get("summary") %}
+  <p class="text-sm text-gray-600 mb-3 italic leading-relaxed">{{ rc["summary"] }}</p>
+  {% endif %}
+  {% if rc.get("selected_skills") %}
+  <div class="flex flex-wrap gap-1 mb-4">
+    {% for skill in rc["selected_skills"] %}
+    <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded border border-blue-100">{{ skill }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if rc.get("experiences") %}
+  <div class="space-y-4">
+    {% for exp in rc["experiences"] %}
+    <div>
+      <p class="text-sm font-semibold text-gray-800">{{ exp.get("title","") }} — {{ exp.get("company","") }}</p>
+      <ul class="mt-1 space-y-1 pl-4 list-disc">
+        {% for bullet in exp.get("bullets", []) %}
+        <li class="text-sm text-gray-600">{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div id="resume-preview-{{ app.id }}" class="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+  <p class="text-sm text-gray-400">Resume not generated yet.</p>
+  <button
+    hx-post="/review/{{ app.id }}/generate-resume"
+    hx-target="#resume-preview-{{ app.id }}"
+    hx-swap="outerHTML"
+    hx-indicator="#resume-spinner-{{ app.id }}"
+    class="btn btn-sm btn-primary text-sm">
+    Generate Resume
+  </button>
+  <svg id="resume-spinner-{{ app.id }}" class="htmx-indicator ml-2 w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+  </svg>
+</div>
+{% endif %}

@@ -1,56 +1,70 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import info %}
 {% block title %}{{ job.title }} — INEEDTHATJOB{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl">
-  <div class="mb-4">
-    <a href="/jobs" class="text-sm text-blue-600 hover:underline">&larr; Back to Jobs</a>
+  <div class="mb-5">
+    <a href="/jobs" class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" /></svg>
+      Back to Jobs
+    </a>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
-    <div class="flex items-start justify-between">
-      <div>
+  <div class="card p-6 mb-4">
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0">
         <h1 class="text-xl font-bold text-gray-900">{{ job.title }}</h1>
-        <p class="text-gray-600 mt-1">{{ job.company }}
+        <p class="text-gray-500 mt-1 text-sm">
+          {{ job.company }}
           {% if job.location %} &middot; {{ job.location }}{% endif %}
           {% if job.remote_type %} &middot;
-            <span class="{% if job.remote_type == 'remote' %}text-green-600{% else %}text-blue-500{% endif %}">{{ job.remote_type }}</span>
+            <span class="{% if job.remote_type == 'remote' %}text-green-600{% else %}text-blue-500{% endif %}">{{ job.remote_type | capitalize }}</span>
           {% endif %}
         </p>
       </div>
-      <div class="flex gap-2 items-center">
-        <span class="badge badge-gray">{{ job.platform }}</span>
-        <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status == 'review_ready' %}badge-blue{% elif job.status == 'scored' %}badge-yellow{% else %}badge-gray{% endif %}">{{ job.status }}</span>
+      <div class="flex gap-2 items-center flex-shrink-0">
+        <span class="badge badge-gray">{{ job.platform | capitalize }}</span>
+        <span class="badge {% if job.status == 'applied' %}badge-green{% elif job.status in ['review_ready', 'approved'] %}badge-blue{% elif job.status == 'scored' %}badge-yellow{% elif job.status == 'failed' %}badge-red{% else %}badge-gray{% endif %}">
+          {{ job.status | status_label }}
+        </span>
       </div>
     </div>
 
     {% if job.salary_min or job.salary_max %}
-    <p class="mt-3 text-sm text-gray-600">
-      Salary:
+    <div class="mt-3 flex items-center gap-2 text-sm text-gray-600">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14" class="text-gray-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       {% if job.salary_min %}{{ "{:,.0f}".format(job.salary_min) }}{% endif %}
       {% if job.salary_min and job.salary_max %} – {% endif %}
       {% if job.salary_max %}{{ "{:,.0f}".format(job.salary_max) }}{% endif %}
       {{ job.currency }}
-    </p>
+      <span class="text-gray-400">/ month</span>
+    </div>
     {% endif %}
 
     <div class="mt-4 flex gap-2">
-      <a href="{{ job.url }}" target="_blank" class="btn btn-secondary btn-sm">View on LinkedIn ↗</a>
+      <a href="{{ job.url }}" target="_blank" class="btn btn-secondary btn-sm">
+        View on {{ job.platform | capitalize }}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="12" height="12" class="ml-1"><path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clip-rule="evenodd" /></svg>
+      </a>
     </div>
   </div>
 
   <!-- Score breakdown -->
   {% if job.compatibility_score is not none %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-4">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Compatibility Score</h2>
-      <span class="text-2xl font-bold {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-600{% else %}text-red-400{% endif %}">
+  <div class="card p-5 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Match Score</h2>
+        {{ info("How well this job fits your profile. Each sub-score shows a different dimension of fit.") }}
+      </div>
+      <span class="text-2xl font-bold tabular-nums {% if job.compatibility_score >= 0.75 %}text-green-600{% elif job.compatibility_score >= 0.55 %}text-amber-500{% else %}text-red-400{% endif %}">
         {{ (job.compatibility_score * 100) | int }}%
       </span>
     </div>
     {% if job.score_breakdown %}
     {% set breakdown = job.score_breakdown | fromjson %}
-    <div class="space-y-2">
+    <div class="space-y-2.5">
       {% set score_labels = {
         'skill_match': 'Skill Match',
         'experience_match': 'Experience',
@@ -64,11 +78,11 @@
         {% set val = breakdown[key] %}
         <div class="flex items-center gap-3">
           <span class="text-xs text-gray-500 w-32 flex-shrink-0">{{ label }}</span>
-          <div class="flex-1 bg-gray-100 rounded-full h-2">
-            <div class="h-2 rounded-full {% if val >= 0.7 %}bg-green-400{% elif val >= 0.45 %}bg-yellow-400{% else %}bg-red-300{% endif %}"
+          <div class="flex-1 bg-gray-100 rounded-full h-1.5">
+            <div class="h-1.5 rounded-full transition-all {% if val >= 0.75 %}bg-green-400{% elif val >= 0.55 %}bg-amber-400{% else %}bg-red-300{% endif %}"
                  style="width: {{ (val * 100) | int }}%"></div>
           </div>
-          <span class="text-xs text-gray-600 w-8 text-right">{{ (val * 100) | int }}%</span>
+          <span class="text-xs text-gray-500 w-8 text-right tabular-nums">{{ (val * 100) | int }}%</span>
         </div>
         {% endif %}
       {% endfor %}
@@ -79,13 +93,14 @@
 
   <!-- Job description -->
   {% if job.description %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Job Description</h2>
+  <div class="card p-6">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Job Description</h2>
     <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ job.description }}</div>
   </div>
   {% else %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center text-sm text-gray-400">
-    Description not fetched yet. Run the pipeline to retrieve it.
+  <div class="card p-10 text-center">
+    <p class="text-gray-400 text-sm">Description not fetched yet.</p>
+    <p class="text-gray-300 text-xs mt-1">Run the pipeline to retrieve it.</p>
   </div>
   {% endif %}
 </div>

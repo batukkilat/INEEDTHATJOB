@@ -3,46 +3,123 @@
 
 {% block content %}
 <div class="max-w-4xl">
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">Application History</h1>
+  <div class="mb-5">
+    <h1 class="text-2xl font-bold text-gray-900">Application History</h1>
+    <p class="text-sm text-gray-400 mt-0.5">All applications you've sent or marked as applied.</p>
+  </div>
+
+  <!-- Filter + sort bar -->
+  <div class="flex gap-3 mb-5 flex-wrap">
+    <input type="text" id="hist-search" placeholder="Search by title or company…"
+           oninput="applyHistory()"
+           class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 placeholder-gray-300">
+    <select id="hist-status" onchange="applyHistory()"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700">
+      <option value="">All statuses</option>
+      <option value="submitted">Submitted</option>
+      <option value="applied">Applied</option>
+      <option value="applied_manually">Applied Manually</option>
+      <option value="failed">Failed</option>
+      <option value="rejected">Rejected</option>
+    </select>
+    <select id="hist-sort" onchange="applyHistory()"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700">
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+      <option value="title-asc">Title A→Z</option>
+      <option value="company-asc">Company A→Z</option>
+    </select>
+  </div>
 
   {% if applications %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  <div class="card overflow-hidden">
     <table class="w-full text-sm">
-      <thead class="bg-gray-50 border-b border-gray-200">
+      <thead class="bg-gray-50 border-b border-gray-100">
         <tr>
-          <th class="px-4 py-3 text-left font-medium text-gray-500">Job</th>
-          <th class="px-4 py-3 text-left font-medium text-gray-500">Method</th>
-          <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-          <th class="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Job</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Method</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Status</th>
+          <th class="px-4 py-3 text-left font-medium text-gray-500 text-xs uppercase tracking-wide cursor-pointer select-none" onclick="toggleDateSort()">
+            Date <span id="date-arrow" class="text-gray-300">↓</span>
+          </th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody id="hist-tbody" class="divide-y divide-gray-100">
         {% for app in applications %}
-        <tr>
+        <tr class="hist-row hover:bg-gray-50 transition-colors"
+            data-status="{{ app.apply_status }}"
+            data-title="{{ (app.job.title or '') | lower if app.job else '' }}"
+            data-company="{{ (app.job.company or '') | lower if app.job else '' }}"
+            data-date="{{ app.created_at[:10] if app.created_at else '' }}">
           <td class="px-4 py-3">
             {% if app.job %}
               <div class="font-medium text-gray-900">{{ app.job.title }}</div>
-              <div class="text-gray-500">{{ app.job.company }}</div>
+              <div class="text-gray-400 text-xs mt-0.5">{{ app.job.company }}</div>
             {% else %}
               <span class="text-gray-400">—</span>
             {% endif %}
           </td>
-          <td class="px-4 py-3 text-gray-600">{{ app.apply_method or '—' }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{{ app.apply_method | status_label if app.apply_method else '—' }}</td>
           <td class="px-4 py-3">
-            <span class="badge {% if app.apply_status == 'submitted' %}badge-green{% elif app.apply_status == 'failed' %}badge-red{% elif app.apply_status == 'rejected' %}badge-gray{% else %}badge-yellow{% endif %}">
-              {{ app.apply_status }}
+            <span class="badge {% if app.apply_status in ['submitted', 'applied'] %}badge-green{% elif app.apply_status == 'failed' %}badge-red{% elif app.apply_status == 'rejected' %}badge-gray{% else %}badge-yellow{% endif %}">
+              {{ app.apply_status | status_label }}
             </span>
           </td>
-          <td class="px-4 py-3 text-gray-400">{{ app.created_at[:10] if app.created_at else '—' }}</td>
+          <td class="px-4 py-3 text-gray-400 text-xs">{{ app.created_at[:10] if app.created_at else '—' }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    <p id="hist-empty-msg" class="px-4 py-6 text-sm text-gray-400 text-center" style="display:none">No results match your filters.</p>
   </div>
   {% else %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-    <p class="text-gray-400 text-sm">No applications yet.</p>
+  <div class="card p-12 text-center">
+    <svg class="mx-auto mb-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="40" height="40">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+    </svg>
+    <p class="text-gray-500 font-medium mb-1">No applications yet</p>
+    <p class="text-gray-400 text-sm">Approved applications will appear here once sent.</p>
   </div>
   {% endif %}
 </div>
+
+<script>
+function applyHistory() {
+  var q = (document.getElementById('hist-search').value || '').toLowerCase();
+  var status = document.getElementById('hist-status').value;
+  var sort = document.getElementById('hist-sort').value;
+  var tbody = document.getElementById('hist-tbody');
+  if (!tbody) return;
+  var rows = Array.from(tbody.querySelectorAll('.hist-row'));
+
+  rows.forEach(r => {
+    var text = r.dataset.title + ' ' + r.dataset.company;
+    var matchQ = !q || text.includes(q);
+    var matchS = !status || r.dataset.status === status;
+    r.style.display = matchQ && matchS ? '' : 'none';
+  });
+
+  var visible = rows.filter(r => r.style.display !== 'none');
+  visible.sort(function(a, b) {
+    if (sort === 'date-desc')   return b.dataset.date.localeCompare(a.dataset.date);
+    if (sort === 'date-asc')    return a.dataset.date.localeCompare(b.dataset.date);
+    if (sort === 'title-asc')   return a.dataset.title.localeCompare(b.dataset.title);
+    if (sort === 'company-asc') return a.dataset.company.localeCompare(b.dataset.company);
+    return 0;
+  });
+  visible.forEach(r => tbody.appendChild(r));
+
+  var emptyMsg = document.getElementById('hist-empty-msg');
+  if (emptyMsg) emptyMsg.style.display = visible.length === 0 ? '' : 'none';
+}
+
+function toggleDateSort() {
+  var sel = document.getElementById('hist-sort');
+  sel.value = sel.value === 'date-desc' ? 'date-asc' : 'date-desc';
+  document.getElementById('date-arrow').textContent = sel.value === 'date-desc' ? '↓' : '↑';
+  applyHistory();
+}
+
+document.addEventListener('DOMContentLoaded', applyHistory);
+</script>
 {% endblock %}

@@ -238,6 +238,7 @@ def generate_docx(content: dict, job_id: int) -> str:
 
 async def generate_resume(job, session: Session, profile: dict | None = None) -> tuple[str, dict]:
     """Tailor and generate resume DOCX. Returns (docx_path, content_dict)."""
-    content = tailor_resume(job, session, profile)
+    import asyncio
+    content = await asyncio.to_thread(tailor_resume, job, session, profile)
     docx_path = generate_docx(content, job.id)
     return docx_path, content

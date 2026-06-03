@@ -224,6 +224,14 @@ def _extract_certs_llm(tail: str) -> list[dict]:
     return []
 
 
+def _str(val) -> str | None:
+    if val is None:
+        return None
+    if isinstance(val, list):
+        return ", ".join(str(v) for v in val if v)
+    return str(val)
+
+
 def save_to_profile(session: Session, parsed: dict) -> dict:
     """Write parsed resume data into the DB. Skips duplicates by name/company+title."""
     counts = {"skills": 0, "experiences": 0, "education": 0, "certifications": 0, "projects": 0}
@@ -237,10 +245,10 @@ def save_to_profile(session: Session, parsed: dict) -> dict:
             continue
         session.add(Skill(
             name=s["name"],
-            category=s.get("category"),
-            proficiency=s.get("proficiency"),
+            category=_str(s.get("category")),
+            proficiency=_str(s.get("proficiency")),
             years_experience=s.get("years_experience"),
-            keywords=s.get("keywords"),
+            keywords=_str(s.get("keywords")),
         ))
         existing_skill_names.add(s["name"].lower())
         counts["skills"] += 1
@@ -259,22 +267,24 @@ def save_to_profile(session: Session, parsed: dict) -> dict:
         exp = Experience(
             company=e["company"],
             title=e["title"],
-            start_date=e["start_date"],
-            end_date=e.get("end_date"),
-            location=e.get("location"),
-            description=e.get("description"),
+            start_date=_str(e["start_date"]),
+            end_date=_str(e.get("end_date")),
+            location=_str(e.get("location")),
+            description=_str(e.get("description")),
             is_remote=bool(e.get("is_remote", False)),
         )
         session.add(exp)
         session.flush()  # get exp.id
         for a in e.get("achievements", []):
+            if isinstance(a, str):
+                a = {"description": a}
             if not a.get("description"):
                 continue
             session.add(Achievement(
                 experience_id=exp.id,
-                description=a["description"],
-                metrics=a.get("metrics"),
-                skills_used=a.get("skills_used"),
+                description=_str(a["description"]),
+                metrics=_str(a.get("metrics")),
+                skills_used=_str(a.get("skills_used")),
             ))
         existing_exp.add(key)
         counts["experiences"] += 1
@@ -322,10 +332,10 @@ def save_to_profile(session: Session, parsed: dict) -> dict:
             continue
         session.add(Project(
             name=p["name"],
-            description=p.get("description"),
-            url=p.get("url"),
-            skills_used=p.get("skills_used"),
-            highlights=p.get("highlights"),
+            description=_str(p.get("description")),
+            url=_str(p.get("url")),
+            skills_used=_str(p.get("skills_used")),
+            highlights=_str(p.get("highlights")),
         ))
         existing_projects.add(p["name"].lower())
         counts["projects"] += 1

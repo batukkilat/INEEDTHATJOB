@@ -12,6 +12,7 @@ Rules:
 - Sign off with the applicant's real name
 - Never use: "excited", "drawn to", "passion", "I am writing to", "seasoned", "leverage", "impactful", "team player", "fast learner", "dynamic", "synergy", "look forward to", "keen interest"
 - No filler enthusiasm. Sound like a real person who read the JD, not a template.
+- Every claim about the applicant must come from the provided background data. Never invent experience, metrics, or achievements.
 
 Return JSON with exactly two fields: subject, body
 

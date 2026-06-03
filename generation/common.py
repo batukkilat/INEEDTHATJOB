@@ -84,12 +84,14 @@ async def extract_contact_email_llm(job) -> str | None:
     )
 
     try:
-        result = chat(
+        import asyncio as _asyncio
+        result = (await _asyncio.to_thread(
+            chat,
             model=settings.scoring_model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=64,
             temperature=0,
-        ).strip().lower()
+        )).strip().lower()
 
         if result == "null" or not result or "@" not in result:
             return None

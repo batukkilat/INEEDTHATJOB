@@ -74,24 +74,103 @@ _JOB_PARSER_TOOL = {
 }
 
 
+def _parse_requirements_heuristic(description: str) -> ParsedRequirements:
+    """Extract job requirements with pure regex/keyword matching — no LLM, no quota."""
+    import re
+    text = description.lower()
+
+    # years of experience: "3+ years", "minimal 2 tahun", "pengalaman 5 tahun"
+    years_min = None
+    m = re.search(r'(\d+)\s*(?:\+|–|-|to|s/d|sd)?\s*(?:years?|tahun)\s*(?:of\s+)?(?:experience|pengalaman)', text)
+    if not m:
+        m = re.search(r'(?:experience|pengalaman|min(?:imal)?)[^\d]{0,20}(\d+)\s*(?:years?|tahun)', text)
+    if m:
+        years_min = float(m.group(1))
+
+    # languages
+    languages = []
+    if any(w in text for w in ["english", "inggris", "bahasa inggris"]):
+        languages.append("English")
+    if any(w in text for w in ["indonesian", "indonesia", "bahasa indonesia", "bahasa"]):
+        languages.append("Indonesian")
+
+    # skills: extract capitalized/technical terms from description
+    # These will be matched against user's skill list by _skill_match_direct
+    skill_terms = re.findall(r'\b([A-Z][a-zA-Z0-9+#.]*(?:\s[A-Z][a-zA-Z0-9+#.]*){0,2})\b', description)
+    skill_terms += re.findall(r'\b(python|java|sql|excel|sap|erp|xero|accurate|myob|zahir|odoo|quickbooks|'
+                              r'ms\s*office|microsoft\s*office|powerpoint|vlookup|pivot|macro|vba|'
+                              r'pajak|perpajakan|brevet|ifrs|psak|gaap|cpa|cfa|acca)\b', text)
+    required_skills = list(dict.fromkeys(s.strip() for s in skill_terms if len(s.strip()) > 1))[:20]
+
+    return ParsedRequirements(
+        required_skills=required_skills,
+        preferred_skills=[],
+        years_experience_min=years_min,
+        languages=languages,
+    )
+
+
 def _parse_requirements(description: str) -> ParsedRequirements:
-    from utils.llm import chat_with_tool
-    prompt_tmpl = Path("generation/prompts/job_parser.txt").read_text()
-    prompt = prompt_tmpl.replace("{job_description}", description[:4000])
+    return _parse_requirements_heuristic(description)
+
+
+def _parse_requirements_batch(jobs: list["Job"]) -> list[ParsedRequirements]:
+    """Parse requirements for N jobs in a single LLM call. Falls back per-job on parse error."""
+    from utils.llm import chat
+    n = len(jobs)
+    snippets = []
+    for i, job in enumerate(jobs):
+        desc = (job.description or job.title)[:800]
+        snippets.append(f"JOB_{i+1} title: {job.title}\n{desc}")
+    combined = "\n\n---\n\n".join(snippets)
+
+    prompt = (
+        f"Extract job requirements for each of the following {n} job postings.\n"
+        f"Return a JSON array of exactly {n} objects in order, one per job.\n"
+        "Each object must have these keys:\n"
+        '  "required_skills": list of strings\n'
+        '  "preferred_skills": list of strings\n'
+        '  "years_experience_min": number or null\n'
+        '  "languages": list of strings (e.g. ["English","Indonesian"])\n\n'
+        f"{combined}\n\n"
+        "Return ONLY the JSON array, no other text."
+    )
 
     try:
-        result = chat_with_tool(
+        raw = chat(
             model=settings.scoring_model,
             messages=[{"role": "user", "content": prompt}],
-            tool_name="extract_requirements",
-            tool_schema=_JOB_PARSER_TOOL,
+            max_tokens=2000,
+            temperature=0,
         )
-        parsed = ParsedRequirements(**result)
-        log.debug("requirements_parsed", skills=len(parsed.required_skills))
-        return parsed
+        start, end = raw.find("["), raw.rfind("]") + 1
+        items = json.loads(raw[start:end])
+        results = []
+        for item in items[:n]:
+            try:
+                results.append(ParsedRequirements(**item))
+            except Exception:
+                results.append(ParsedRequirements())
+        while len(results) < n:
+            results.append(ParsedRequirements())
+        log.debug("batch_requirements_parsed", count=n)
+        return results
     except Exception as e:
-        log.warning("requirements_parse_failed", error=str(e))
-        return ParsedRequirements()
+        log.warning("batch_parse_failed", error=str(e))
+        return [ParsedRequirements() for _ in jobs]
+
+
+def _skill_match_from_text(description: str, user_skills: list[Skill]) -> float:
+    """Direct keyword scan: check which user skills appear in job description text."""
+    if not user_skills or not description:
+        return 0.6
+    text = description.lower()
+    hits = 0
+    for s in user_skills:
+        terms = [s.name.lower()] + ([kw.strip().lower() for kw in s.keywords.split(",")] if s.keywords else [])
+        if any(t and t in text for t in terms):
+            hits += 1
+    return min(1.0, hits / max(len(user_skills) * 0.3, 1))
 
 
 def _skill_match(required: list[str], preferred: list[str], user_skills: list[Skill]) -> float:
@@ -208,7 +287,7 @@ def score_job(job: Job, session: Session) -> tuple[float, dict]:
     user_years = _total_experience_years(experiences)
 
     breakdown = {
-        "skill_match":       _skill_match(requirements.required_skills, requirements.preferred_skills, skills),
+        "skill_match":       _skill_match_from_text(job.description or job.title, skills),
         "experience_match":  _experience_match(requirements.years_experience_min, user_years),
         "title_relevance":   _title_relevance(job.title, prefs),
         "location_match":    _location_match(job, prefs),
@@ -219,3 +298,28 @@ def score_job(job: Job, session: Session) -> tuple[float, dict]:
     overall = round(sum(score * WEIGHTS[key] for key, score in breakdown.items()), 3)
     log.info("job_scored", job_id=job.id, title=job.title, score=overall)
     return overall, breakdown
+
+
+def score_jobs_batch(jobs: list[Job], session: Session) -> list[tuple[float, dict]]:
+    """Score multiple jobs — pure heuristic, zero LLM calls."""
+    skills = list(session.exec(select(Skill)).all())
+    experiences = list(session.exec(select(Experience)).all())
+    prefs = session.get(Preferences, 1)
+    user_years = _total_experience_years(experiences)
+
+    results = []
+    for job in jobs:
+        description = job.description or job.title
+        requirements = _parse_requirements_heuristic(description)
+        breakdown = {
+            "skill_match":       _skill_match_from_text(description, skills),
+            "experience_match":  _experience_match(requirements.years_experience_min, user_years),
+            "title_relevance":   _title_relevance(job.title, prefs),
+            "location_match":    _location_match(job, prefs),
+            "language_match":    _language_match(requirements.languages, prefs),
+            "salary_match":      _salary_match(job, prefs),
+        }
+        overall = round(sum(score * WEIGHTS[key] for key, score in breakdown.items()), 3)
+        log.info("job_scored", job_id=job.id, title=job.title, score=overall)
+        results.append((overall, breakdown))
+    return results

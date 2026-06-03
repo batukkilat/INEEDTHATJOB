@@ -7,20 +7,19 @@ from sqlmodel import Session, select
 from config import settings
 from db.database import engine
 from db.models import Job, Application, ActivityLog, Preferences
-from generation.resume import generate_resume
-from generation.common import build_profile_json, extract_contact_email, extract_contact_email_llm
+from generation.common import extract_contact_email
 from jobs.scrapers.linkedin import LinkedInScraper
 from jobs.scrapers.glints import GlintsScraper
 from jobs.scrapers.jobstreet import JobStreetScraper
 from jobs.scrapers.x import XScraper
 from jobs.scrapers.threads import ThreadsScraper
-from jobs.scorer import score_job, title_matches_roles
+from jobs.scorer import score_job, score_jobs_batch, title_matches_roles
 from jobs.service import upsert_job
 from utils.logging import get_logger
 
 MIN_SCORE_TO_GENERATE = 0.55
-# Seconds between per-job resume calls to stay under Groq free-tier 6000 TPM.
-GEN_CALL_DELAY = 25
+SCORE_BATCH_SIZE = 10  # jobs per scoring batch
+SCORE_CALL_DELAY = 0   # seconds between batches (0 = heuristic scorer, no rate limiting needed)
 
 log = get_logger(__name__)
 
@@ -116,6 +115,8 @@ async def _fetch_descriptions(session: Session, jobs: list[Job]) -> None:
     log.info("pipeline_fetch_descriptions", count=len(needs_desc))
     scrapers: dict = {}
     for job in needs_desc:
+        if _stop_requested:
+            break
         cls = _SCRAPER_MAP.get(job.platform)
         if not cls:
             continue
@@ -125,68 +126,75 @@ async def _fetch_descriptions(session: Session, jobs: list[Job]) -> None:
         if desc:
             job.description = desc
             session.add(job)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.3)
     session.commit()
 
 
 async def _score_phase(session: Session) -> int:
     new_jobs = list(session.exec(select(Job).where(Job.status == "new")).all())
     log.info("pipeline_score_start", count=len(new_jobs))
-    _log_activity(session, "pipeline_score_start", details=f"Scoring {len(new_jobs)} jobs")
+    _log_activity(session, "pipeline_score_start", details=f"Scoring {len(new_jobs)} jobs in batches of {SCORE_BATCH_SIZE}")
 
     scored = 0
-    for job in new_jobs:
+    for i in range(0, len(new_jobs), SCORE_BATCH_SIZE):
+        if _stop_requested:
+            log.info("pipeline_score_stopped_early", scored=scored)
+            break
+        batch = new_jobs[i:i + SCORE_BATCH_SIZE]
         try:
-            overall, breakdown = score_job(job, session)
-            job.compatibility_score = overall
-            job.score_breakdown = json.dumps(breakdown)
-            job.status = "scored"
-            session.add(job)
+            results = await asyncio.to_thread(score_jobs_batch, batch, session)
+            for job, (overall, breakdown) in zip(batch, results):
+                job.compatibility_score = overall
+                job.score_breakdown = json.dumps(breakdown)
+                job.status = "scored"
+                session.add(job)
+                _log_activity(session, "scored", job_id=job.id, details=f"{job.title} @ {job.company} — {overall:.0%}")
+                scored += 1
             session.commit()
-            _log_activity(session, "scored", job_id=job.id, details=f"{job.title} @ {job.company} — {overall:.0%}")
-            scored += 1
+            log.info("pipeline_score_batch_done", batch=i // SCORE_BATCH_SIZE + 1, scored=scored)
         except Exception as e:
-            log.error("score_failed", job_id=job.id, error=str(e))
-            job.status = "scored"  # move on even if scoring fails
-            job.compatibility_score = 0.0
-            session.add(job)
+            log.error("score_batch_failed", batch_start=i, error=str(e))
+            for job in batch:
+                job.status = "scored"
+                job.compatibility_score = 0.0
+                session.add(job)
             session.commit()
+        await asyncio.sleep(SCORE_CALL_DELAY)
 
     log.info("pipeline_score_done", scored=scored)
     return scored
 
 
-async def _generate_phase(session: Session) -> int:
+async def _queue_phase(session: Session) -> int:
+    """Move high-scoring jobs into review_ready and create stub Applications.
+    No generation happens here — user triggers resume/cover letter/email on demand."""
     candidates = list(session.exec(
         select(Job)
         .where(Job.status == "scored")
         .where(Job.compatibility_score >= MIN_SCORE_TO_GENERATE)
+        .order_by(Job.compatibility_score.desc())
     ).all())
-    log.info("pipeline_generate_start", count=len(candidates))
-    _log_activity(session, "pipeline_generate_start",
-                  details=f"Generating for {len(candidates)} jobs (score ≥ {MIN_SCORE_TO_GENERATE:.0%})")
-    profile = build_profile_json(session)
-    generated = 0
+    log.info("pipeline_queue_start", count=len(candidates))
+    _log_activity(session, "pipeline_queue_start",
+                  details=f"Queuing {len(candidates)} jobs (score ≥ {MIN_SCORE_TO_GENERATE:.0%}) for review")
+
+    queued = 0
     for job in candidates:
         if _stop_requested:
             break
         try:
-            job.status = "generating"
-            session.add(job)
-            session.commit()
-
-            # Only the resume is generated here. Cover letter + email are generated
-            # on demand from the review page to save tokens on jobs the user skips.
-            docx_path, resume_content = await generate_resume(job, session, profile)
-
-            recipient_email = extract_contact_email(job.description)
-            if not recipient_email:
-                recipient_email = await extract_contact_email_llm(job)
-
+            # Skip if already queued (re-run dedup)
+            existing = session.exec(
+                select(Application).where(Application.job_id == job.id)
+            ).first()
+            if existing:
+                job.status = "review_ready"
+                session.add(job)
+                session.commit()
+                continue
+            recipient_email = extract_contact_email(job.description or "")
             app = Application(
                 job_id=job.id,
-                resume_path=docx_path,
-                resume_content=json.dumps(resume_content),
                 recipient_email=recipient_email,
                 apply_status="pending_review",
                 created_at=_now(),
@@ -195,18 +203,12 @@ async def _generate_phase(session: Session) -> int:
             job.status = "review_ready"
             session.add(job)
             session.commit()
-            _log_activity(session, "generated", job_id=job.id,
-                          details=f"{job.title} @ {job.company}")
-            generated += 1
-            await asyncio.sleep(GEN_CALL_DELAY)
+            queued += 1
         except Exception as e:
-            log.error("generate_failed", job_id=job.id, error=str(e))
-            job.status = "scored"
-            session.add(job)
-            session.commit()
+            log.error("queue_failed", job_id=job.id, error=str(e))
 
-    log.info("pipeline_generate_done", generated=generated)
-    return generated
+    log.info("pipeline_queue_done", queued=queued)
+    return queued
 
 
 async def run_pipeline(max_pages: int = 3, platforms: list[str] | None = None) -> dict:
@@ -252,9 +254,9 @@ async def run_pipeline(max_pages: int = 3, platforms: list[str] | None = None) -
                 _log_activity(session, "pipeline_stopped")
                 return result
 
-            _stage = "generating"
-            generated = await _generate_phase(session)
-            result["generated"] = generated
+            _stage = "queuing"
+            queued = await _queue_phase(session)
+            result["queued"] = queued
 
             _log_activity(session, "pipeline_complete", details=json.dumps(result))
             log.info("pipeline_complete", **result)

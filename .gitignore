@@ -8,5 +8,13 @@ venv/
 dist/
 build/
 data/
+resumes/
+generated/
+*.db
+*.sqlite
 .pytest_cache/
 .ruff_cache/
+*.har
+*.HAR
+debug_glints.py
+debug_screenshots/

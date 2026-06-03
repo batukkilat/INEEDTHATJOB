@@ -76,6 +76,23 @@ def apply_manual(app_id: int, session: Session = Depends(get_session)):
     return HTMLResponse("")
 
 
+@router.post("/review/{app_id}/generate-resume", response_class=HTMLResponse)
+async def generate_resume_route(app_id: int, request: Request,
+                                session: Session = Depends(get_session)):
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Application not found", status_code=404)
+    job = session.get(Job, app.job_id)
+    import json as _json
+    from generation.resume import generate_resume
+    docx_path, resume_content = await generate_resume(job, session)
+    app.resume_path = docx_path
+    app.resume_content = _json.dumps(resume_content)
+    session.add(app)
+    session.commit()
+    return templates.TemplateResponse(request, "partials/resume_preview.html", {"app": app})
+
+
 @router.post("/review/{app_id}/generate-cover-letter", response_class=HTMLResponse)
 async def generate_cover_letter_route(app_id: int, request: Request,
                                       session: Session = Depends(get_session)):

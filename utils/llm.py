@@ -25,7 +25,7 @@ def _headers() -> dict:
     return {"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"}
 
 
-def _post(payload: dict, max_retries: int = 4) -> dict:
+def _post(payload: dict, max_retries: int = 6) -> dict:
     """POST to Groq with exponential backoff on 429/503."""
     delay = 5
     for attempt in range(max_retries):
@@ -34,8 +34,16 @@ def _post(payload: dict, max_retries: int = 4) -> dict:
             retry_after = int(r.headers.get("retry-after", delay))
             wait = max(retry_after, delay)
             log.warning("llm_rate_limited", status=r.status_code, wait=wait, attempt=attempt + 1)
-            time.sleep(wait)
-            delay = min(delay * 2, 60)
+            # Sleep in 1s chunks so stop button is responsive during backoff
+            for _ in range(int(wait)):
+                try:
+                    from pipeline import stop_requested
+                    if stop_requested():
+                        raise InterruptedError("stop requested during backoff")
+                except ImportError:
+                    pass
+                time.sleep(1)
+            delay = min(delay * 2, 120)
             continue
         # Groq returns 400 tool_use_failed when a weak model emits a malformed tool call;
         # the usable generation is in error.failed_generation — return it for the caller to salvage.

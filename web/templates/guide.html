@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+{% block title %}Guide — INEEDTHATJOB{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl pb-16">
+
+  <!-- Hero -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500 flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+      </span>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Welcome to INEEDTHATJOB</h1>
+        <p class="text-sm text-gray-500">Your personal automated job hunting assistant.</p>
+      </div>
+    </div>
+    <p class="text-gray-600 leading-relaxed">
+      This app searches job boards, scores each listing against your resume, and prepares tailored applications — all automatically.
+      You only need to review and approve before anything is sent. Nothing ever gets submitted without your say-so.
+    </p>
+    <button onclick="localStorage.setItem('ij_guide_seen','1'); window.location.href='/';"
+            class="mt-4 btn btn-primary gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
+      I'm ready — take me to the Dashboard
+    </button>
+  </div>
+
+  <!-- TOC -->
+  <nav class="card p-4 mb-8 text-sm">
+    <p class="font-semibold text-gray-700 mb-2">On this page</p>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-blue-500">
+      <a href="#installation"    class="hover:underline">① Installation</a>
+      <a href="#first-setup"     class="hover:underline">② First-time setup</a>
+      <a href="#how-it-works"    class="hover:underline">③ How the pipeline works</a>
+      <a href="#pages"           class="hover:underline">④ Page-by-page guide</a>
+      <a href="#scores"          class="hover:underline">⑤ Understanding match scores</a>
+      <a href="#tips"            class="hover:underline">⑥ Tips &amp; tricks</a>
+      <a href="#customization"   class="hover:underline">⑦ Customization</a>
+      <a href="#troubleshooting" class="hover:underline">⑧ Troubleshooting</a>
+    </div>
+  </nav>
+
+
+  <!-- ① Installation -->
+  <section id="installation" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">1</span>
+      Installation
+    </h2>
+
+    <!-- Beginner callout -->
+    <details class="mb-4 bg-amber-50 border border-amber-100 rounded-xl overflow-hidden">
+      <summary class="px-5 py-4 cursor-pointer select-none font-semibold text-amber-800 flex items-center gap-2 hover:bg-amber-100 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" class="flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" /></svg>
+        Never used Python or a terminal before? Start here.
+      </summary>
+      <div class="px-5 pb-5 pt-3 space-y-5 text-sm text-amber-900">
+
+        <div>
+          <p class="font-semibold mb-2">Step 1 — Install Python</p>
+          <div class="space-y-3">
+            <div class="bg-white border border-amber-100 rounded-lg p-3">
+              <p class="font-medium mb-1">Windows</p>
+              <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                <li>Go to <strong>python.org/downloads</strong> and click the big yellow "Download Python 3.x.x" button.</li>
+                <li>Run the installer. <strong>Important:</strong> on the first screen, check the box that says <strong>"Add Python to PATH"</strong> before clicking Install.</li>
+                <li>Click "Install Now" and wait for it to finish.</li>
+              </ol>
+            </div>
+            <div class="bg-white border border-amber-100 rounded-lg p-3">
+              <p class="font-medium mb-1">macOS</p>
+              <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                <li>Open <strong>Terminal</strong> (press Cmd+Space, type "Terminal", press Enter).</li>
+                <li>Type <code class="bg-amber-50 px-1 rounded">python3 --version</code> and press Enter. If you see a version number, Python is already installed — skip to Step 2.</li>
+                <li>If not, go to <strong>python.org/downloads</strong> and download the macOS installer.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-2">Step 2 — Open a terminal and navigate to the app folder</p>
+          <div class="space-y-3">
+            <div class="bg-white border border-amber-100 rounded-lg p-3">
+              <p class="font-medium mb-1">Windows</p>
+              <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                <li>Press <strong>Win + R</strong>, type <code class="bg-amber-50 px-1 rounded">cmd</code>, press Enter. A black window opens — that's the terminal.</li>
+                <li>Find where you put the INEEDTHATJOB folder. For example, if it's on your Desktop in a folder called "INEEDTHATJOB", type:
+                  <pre class="mt-1 bg-amber-50 rounded p-2 font-mono text-xs">cd %USERPROFILE%\Desktop\INEEDTHATJOB</pre>
+                </li>
+                <li>Press Enter. The prompt should now show the folder name.</li>
+              </ol>
+            </div>
+            <div class="bg-white border border-amber-100 rounded-lg p-3">
+              <p class="font-medium mb-1">macOS</p>
+              <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                <li>Open Terminal (Cmd+Space → "Terminal").</li>
+                <li>Type <code class="bg-amber-50 px-1 rounded">cd </code> (with a space after), then drag the INEEDTHATJOB folder from Finder into the Terminal window. The path will appear automatically. Press Enter.</li>
+              </ol>
+            </div>
+          </div>
+          <p class="mt-2 text-xs text-amber-700">💡 The terminal is just a text-based way to run programs. Every command you type here runs inside the app folder.</p>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-1">Step 3 — You're ready</p>
+          <p class="text-amber-800">Continue with the regular installation steps below. Use the same terminal window you just opened. Type each command and press Enter, then wait for it to finish before typing the next one.</p>
+        </div>
+
+      </div>
+    </details>
+
+    <div class="card p-5 space-y-5 text-gray-700">
+      <div>
+        <p class="font-semibold text-gray-800 mb-2">Requirements</p>
+        <ul class="list-disc pl-5 space-y-1.5 text-gray-600">
+          <li>Python 3.11 or newer</li>
+          <li>A free Groq API key — used for resume and cover letter generation</li>
+          <li>An email account with SMTP enabled (Gmail recommended) — for sending applications</li>
+        </ul>
+      </div>
+
+      <!-- Groq key guide -->
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
+        <p class="font-semibold text-blue-900 mb-2 flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" /></svg>
+          Getting your free Groq API key
+        </p>
+        <ol class="list-decimal pl-5 space-y-1.5 text-sm text-blue-800">
+          <li>Go to <strong>console.groq.com</strong> and sign up (Google or GitHub login works).</li>
+          <li>Once logged in, click <strong>API Keys</strong> in the left sidebar.</li>
+          <li>Click <strong>Create API Key</strong>, name it "INEEDTHATJOB", click Create.</li>
+          <li>Copy the key — it starts with <code class="bg-blue-100 px-1 rounded text-xs">gsk_</code>. <em>You won't see it again after closing the popup.</em></li>
+          <li>Paste it into your <code class="bg-blue-100 px-1 rounded text-xs">.env</code> file as shown below.</li>
+        </ol>
+        <p class="mt-2 text-xs text-blue-600">Free tier has generous daily limits — enough for dozens of applications per day.</p>
+      </div>
+
+      <div>
+        <p class="font-semibold text-gray-800 mb-3">Setup steps</p>
+        <ol class="list-decimal pl-5 space-y-3 text-gray-600">
+          <li>
+            In your terminal, install dependencies:
+            <pre class="mt-1.5 bg-gray-50 rounded-lg p-3 font-mono text-sm overflow-x-auto">pip install -e .</pre>
+            <span class="text-xs text-gray-400">This may take a minute. You'll see a lot of text — that's normal.</span>
+          </li>
+          <li>
+            Create a file named <code class="bg-gray-100 px-1 rounded">.env</code> in the app folder (use any text editor — Notepad works) and add your Groq key:
+            <pre class="mt-1.5 bg-gray-50 rounded-lg p-3 font-mono text-sm overflow-x-auto">GROQ_API_KEY=gsk_your_key_here</pre>
+            <span class="text-xs text-gray-400">Replace <code>gsk_your_key_here</code> with the key you copied. Save the file.</span>
+          </li>
+          <li>
+            Start the app:
+            <pre class="mt-1.5 bg-gray-50 rounded-lg p-3 font-mono text-sm overflow-x-auto">python main.py</pre>
+            <span class="text-xs text-gray-400">On Mac, use <code>python3 main.py</code> if the above doesn't work.</span>
+          </li>
+          <li>
+            Open your browser and go to: <strong>http://localhost:8000</strong>
+            <p class="text-xs text-gray-400 mt-0.5">Leave the terminal window open while using the app — closing it stops the server.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ② First-time setup -->
+  <section id="first-setup" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">2</span>
+      First-time setup
+    </h2>
+    <p class="text-sm text-gray-600 mb-4">Do these three steps once before running your first job search.</p>
+    <div class="space-y-3">
+
+      <div class="card p-4 flex gap-4">
+        <span class="w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">A</span>
+        <div class="text-sm">
+          <p class="font-semibold text-gray-800">Import your resume → <a href="/profile" class="text-blue-500 hover:underline">Profile page</a></p>
+          <p class="text-gray-500 mt-0.5">Upload your existing resume (PDF or DOCX). The app reads your skills, experience, and education from it. This is what all job matching and generation is based on.</p>
+          <p class="text-xs text-gray-400 mt-1">You can also add/edit skills and experience manually after importing.</p>
+        </div>
+      </div>
+
+      <div class="card p-4 flex gap-4">
+        <span class="w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">B</span>
+        <div class="text-sm">
+          <p class="font-semibold text-gray-800">Set your target roles → <a href="/settings" class="text-blue-500 hover:underline">Settings page</a></p>
+          <p class="text-gray-500 mt-0.5">Tell the app which job titles to search for. Be specific: "Finance Staff", "Accounting Officer", "Tax Specialist". The app only fetches listings that match these titles.</p>
+          <p class="text-xs text-gray-400 mt-1">Also set target locations and minimum salary while you're there.</p>
+        </div>
+      </div>
+
+      <div class="card p-4 flex gap-4">
+        <span class="w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">C</span>
+        <div class="text-sm">
+          <p class="font-semibold text-gray-800">Configure email → <a href="/settings" class="text-blue-500 hover:underline">Settings → Email (SMTP)</a></p>
+          <p class="text-gray-500 mt-0.5">Needed only to actually send applications. Use the Setup Guide inside the SMTP section for step-by-step instructions. You can skip this and apply manually if you prefer.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ③ How the pipeline works -->
+  <section id="how-it-works" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">3</span>
+      How the pipeline works
+    </h2>
+    <div class="card p-5 text-sm text-gray-700">
+      <p class="text-gray-500 mb-4">When you click <strong>Start Job Search</strong> on the Dashboard, the app runs these steps automatically:</p>
+      <div class="space-y-3">
+        {% for step, desc in [
+          ("① Find Jobs",       "Scrapes LinkedIn, Glints, and JobStreet for listings that match your target roles. Only titles that match your roles are kept."),
+          ("② Fetch Details",   "Opens each listing to grab the full job description. This is needed for accurate scoring."),
+          ("③ Score Matches",   "Rates each job from 0–100% based on how well it fits your profile — skills, experience, title, location, salary, and language all factor in."),
+          ("④ Queue Top Picks", "Jobs scoring ≥ 55% are added to your Review Queue. Lower-scoring jobs are stored but not surfaced."),
+        ] %}
+        <div class="flex gap-3">
+          <span class="font-semibold text-blue-600 w-28 flex-shrink-0">{{ step }}</span>
+          <span class="text-gray-600">{{ desc }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-5 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
+        <strong>Nothing is sent automatically.</strong> After the pipeline finishes, you review each job and click Generate + Approve before anything goes out.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ④ Pages guide -->
+  <section id="pages" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">4</span>
+      Page-by-page guide
+    </h2>
+    <div class="space-y-3 text-sm">
+
+      <!-- Dashboard -->
+      <div class="card p-4 flex gap-3">
+        <a href="/" class="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0 hover:bg-gray-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+        </a>
+        <div>
+          <a href="/" class="font-semibold text-gray-800 hover:text-blue-600">Dashboard</a>
+          <p class="text-gray-500 mt-0.5">Your home base. Start job searches here, see how many jobs were found, how many are strong matches, and how many are waiting for your review.</p>
+        </div>
+      </div>
+
+      <!-- Jobs -->
+      <div class="card p-4 flex gap-3">
+        <a href="/jobs/" class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 hover:bg-blue-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+        </a>
+        <div>
+          <a href="/jobs/" class="font-semibold text-gray-800 hover:text-blue-600">Jobs</a>
+          <p class="text-gray-500 mt-0.5">A full list of every job the app has found. Filter by status or platform. Click any row to see the full description and match score breakdown.</p>
+        </div>
+      </div>
+
+      <!-- Review Queue -->
+      <div class="card p-4 flex gap-3">
+        <a href="/review" class="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0 hover:bg-amber-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75" /></svg>
+        </a>
+        <div>
+          <a href="/review" class="font-semibold text-gray-800 hover:text-blue-600">Review Queue</a>
+          <p class="text-gray-500 mt-0.5">The most important page. Jobs that scored well land here. Generate a tailored resume, cover letter, and email per job — then approve to send, or skip. The app never submits without your approval.</p>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="card p-4 flex gap-3">
+        <a href="/history" class="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0 hover:bg-emerald-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+        </a>
+        <div>
+          <a href="/history" class="font-semibold text-gray-800 hover:text-blue-600">History</a>
+          <p class="text-gray-500 mt-0.5">All applications you've sent or manually applied to. Filter by status, search by company, sort by date.</p>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="card p-4 flex gap-3">
+        <a href="/profile/" class="w-9 h-9 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0 hover:bg-purple-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+        </a>
+        <div>
+          <a href="/profile/" class="font-semibold text-gray-800 hover:text-blue-600">Profile</a>
+          <p class="text-gray-500 mt-0.5">Your resume data — skills, experience, education, certifications, projects. The more complete this is, the better your generated resumes and match scores will be.</p>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="card p-4 flex gap-3">
+        <a href="/settings/" class="w-9 h-9 rounded-lg bg-gray-500 flex items-center justify-center flex-shrink-0 hover:bg-gray-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+        </a>
+        <div>
+          <a href="/settings/" class="font-semibold text-gray-800 hover:text-blue-600">Settings</a>
+          <p class="text-gray-500 mt-0.5">Target roles, locations, salary preferences, SMTP email config, and the auto-schedule toggle. Set these up before your first search.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ⑤ Match scores -->
+  <section id="scores" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">5</span>
+      Understanding match scores
+    </h2>
+    <div class="card p-5 text-sm">
+      <p class="text-gray-600 mb-4">Match scores are calculated from six factors, each weighted differently:</p>
+      <div class="space-y-2.5 mb-5">
+        {% for label, weight, desc in [
+          ("Skill Match",      "35%", "How many of your skills appear in the job description."),
+          ("Experience",       "25%", "Whether your total years of experience meets the job's requirement."),
+          ("Title Relevance",  "20%", "Whether the job title matches any of your target roles."),
+          ("Location",         "10%", "Whether the job's location matches your preferred locations."),
+          ("Language",          "5%", "Whether the job posting language matches your preference."),
+          ("Salary",            "5%", "Whether the stated salary meets your minimum."),
+        ] %}
+        <div class="flex items-start gap-3">
+          <span class="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-500 flex-shrink-0 w-10 text-center text-xs">{{ weight }}</span>
+          <div>
+            <span class="font-medium text-gray-800">{{ label }}</span>
+            <span class="text-gray-500 ml-2">{{ desc }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="grid grid-cols-4 gap-2 text-center text-xs">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+          <div class="font-bold text-emerald-600 text-base">≥ 75%</div>
+          <div class="text-emerald-700 font-medium mt-0.5">Excellent</div>
+          <div class="text-gray-400 mt-1">Strong fit — apply</div>
+        </div>
+        <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
+          <div class="font-bold text-blue-600 text-base">55–74%</div>
+          <div class="text-blue-700 font-medium mt-0.5">Good</div>
+          <div class="text-gray-400 mt-1">Worth reviewing</div>
+        </div>
+        <div class="bg-amber-50 border border-amber-100 rounded-lg p-3">
+          <div class="font-bold text-amber-500 text-base">35–54%</div>
+          <div class="text-amber-700 font-medium mt-0.5">Weak</div>
+          <div class="text-gray-400 mt-1">Not queued</div>
+        </div>
+        <div class="bg-gray-50 border border-gray-100 rounded-lg p-3">
+          <div class="font-bold text-gray-400 text-base">&lt; 35%</div>
+          <div class="text-gray-500 font-medium mt-0.5">Poor</div>
+          <div class="text-gray-400 mt-1">Skip</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ⑥ Tips -->
+  <section id="tips" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">6</span>
+      Tips &amp; tricks
+    </h2>
+    <div class="space-y-3 text-sm">
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Add ATS keywords to your skills</p>
+        <p class="text-gray-600">On the Profile page, each skill has an "ATS Keywords" field. Add synonyms and abbreviations that job postings use. Example: for "Microsoft Excel", add keywords <code class="bg-gray-100 px-1 rounded text-xs">Excel, spreadsheet, vlookup, pivot table</code>. The more keywords, the better the skill matching.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Specific achievements generate better resumes</p>
+        <p class="text-gray-600">On the Profile page, each experience has an Achievements section. Add specific, metric-driven bullets like "Reduced monthly close time by 2 days by automating reconciliation." The AI picks the most relevant ones per job — it won't invent numbers.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Generate resume before cover letter</p>
+        <p class="text-gray-600">In the Review Queue, generate the resume first. The cover letter reads the resume content and produces a more coherent, consistent application package.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Use "Apply via Platform" for jobs with their own portal</p>
+        <p class="text-gray-600">This button opens the job posting in a new tab and marks it as applied. Use it for jobs that require applying through Workday, Greenhouse, or similar systems.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Schedule daily searches so you never miss a new listing</p>
+        <p class="text-gray-600">Go to Settings → Auto-Schedule. Toggle it on and set a cron expression. Default (<code class="bg-gray-100 px-1 rounded text-xs">0 9 * * 1-5</code>) runs every weekday at 9 AM. The app must be running for scheduled searches to fire.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Score seems low? Check the breakdown</p>
+        <p class="text-gray-600">Click any job in the Jobs list to see which sub-score dragged it down. Low Skill Match = add more keywords to your skills. Title Relevance = 0% = the job title doesn't match your target roles exactly.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ⑦ Customization -->
+  <section id="customization" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">7</span>
+      Customization
+    </h2>
+    <div class="space-y-3 text-sm">
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Change the minimum score threshold</p>
+        <p class="text-gray-600">By default, only jobs scoring ≥ 55% are queued for review. Open <code class="bg-gray-100 px-1 rounded text-xs">pipeline.py</code> and change <code class="bg-gray-100 px-1 rounded text-xs">MIN_SCORE_TO_GENERATE = 0.55</code> to any value between 0 and 1.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Adjust scoring weights</p>
+        <p class="text-gray-600">Open <code class="bg-gray-100 px-1 rounded text-xs">jobs/scorer.py</code> and edit the <code class="bg-gray-100 px-1 rounded text-xs">WEIGHTS</code> dict. Values must sum to 1.0.</p>
+        <pre class="mt-2 bg-gray-50 rounded-lg p-3 font-mono text-xs overflow-x-auto">WEIGHTS = {
+    "skill_match":      0.35,   # ← increase to prioritize skill fit
+    "experience_match": 0.25,
+    "title_relevance":  0.20,
+    "location_match":   0.10,   # ← decrease if location doesn't matter
+    "language_match":   0.05,
+    "salary_match":     0.05,
+}</pre>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Swap the AI model</p>
+        <p class="text-gray-600">Add these to your <code class="bg-gray-100 px-1 rounded text-xs">.env</code> file:</p>
+        <pre class="mt-2 bg-gray-50 rounded-lg p-3 font-mono text-xs overflow-x-auto">GENERATION_MODEL=llama-3.3-70b-versatile
+SCORING_MODEL=llama-3.1-8b-instant</pre>
+        <p class="text-xs text-gray-400 mt-1">Check <strong>console.groq.com</strong> for available models and their rate limits.</p>
+      </div>
+
+      <div class="card p-4">
+        <p class="font-semibold text-gray-800 mb-1">Edit generation style and tone</p>
+        <p class="text-gray-600">All AI prompts are plain text files in <code class="bg-gray-100 px-1 rounded text-xs">generation/prompts/</code>. Edit them to change the style, tone, or language of generated content — no Python needed.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ⑧ Troubleshooting -->
+  <section id="troubleshooting" class="mb-10 scroll-mt-4">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold flex items-center justify-center flex-shrink-0">8</span>
+      Troubleshooting
+    </h2>
+    <div class="space-y-2 text-sm">
+
+      {% set faq = [
+        (
+          "Review Queue is empty after running the pipeline",
+          "Two possible causes: (1) No jobs scored ≥ 55%. Check the Dashboard's Match Quality bars — if most jobs are 'Weak' or 'Poor', add ATS keywords to your skills and broaden your target roles. (2) Target roles are too narrow — try adding variants like 'Accounting Staff', 'Staff Keuangan', 'Finance Admin'."
+        ),
+        (
+          "Jobs list is empty",
+          "The pipeline hasn't run yet, or the scraper found no matching titles. Go to the Dashboard and click Start Job Search. If it returns 0 jobs, check that your target roles in Settings are spelled correctly."
+        ),
+        (
+          "SMTP test fails with authentication error",
+          "For Gmail: use an App Password, not your regular password. Go to Google Account → Security → App passwords and generate one. Your regular password will not work even if it's correct."
+        ),
+        (
+          "Generated resume looks wrong or uses wrong information",
+          "The AI only uses data from your Profile. If the resume is incorrect, update your Profile first, then click 'Generate Resume' again — it overwrites the previous version."
+        ),
+        (
+          "Match score seems too low for a job I'm qualified for",
+          "Click the job to see the score breakdown. Most common causes: low Skill Match (add the job's exact terms to your skill keywords) or Title Relevance = 0% (the job title doesn't match any of your target roles)."
+        ),
+        (
+          "The pipeline stops or freezes",
+          "Click Stop on the Dashboard. If stuck on 'Fetching Details', it may be waiting on slow scraper responses — stop and run again. Already-fetched descriptions are cached."
+        ),
+        (
+          "App won't start / import errors",
+          "Run 'pip install -e .' again. If you see a database error, delete the .db file in the data/ folder and restart — the app recreates it automatically (but you'll lose existing data)."
+        ),
+      ] %}
+
+      {% for question, answer in faq %}
+      <details class="card text-sm group">
+        <summary class="p-4 cursor-pointer font-medium text-gray-800 select-none list-none flex items-center justify-between hover:text-blue-600 transition-colors">
+          {{ question }}
+          <svg class="flex-shrink-0 ml-2 text-gray-300 group-open:rotate-90 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+        </summary>
+        <div class="px-4 pb-4 text-gray-600 border-t border-gray-100 pt-3">{{ answer }}</div>
+      </details>
+      {% endfor %}
+
+    </div>
+  </section>
+
+  <!-- Footer CTA -->
+  <div class="card p-6 text-center bg-blue-50 border-blue-100">
+    <p class="font-semibold text-blue-900 mb-1">Ready to start?</p>
+    <p class="text-sm text-blue-700 mb-4">Import your resume, set your target roles, then run your first search.</p>
+    <button onclick="localStorage.setItem('ij_guide_seen','1'); window.location.href='/';"
+            class="btn btn-primary gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
+      Go to Dashboard
+    </button>
+  </div>
+
+</div>
+
+<script>
+var _guideObserver = new IntersectionObserver(function(entries) {
+  if (entries[0].isIntersecting) {
+    localStorage.setItem('ij_guide_seen', '1');
+    _guideObserver.disconnect();
+  }
+}, { threshold: 0.5 });
+var footer = document.querySelector('#troubleshooting');
+if (footer) _guideObserver.observe(footer);
+</script>
+{% endblock %}

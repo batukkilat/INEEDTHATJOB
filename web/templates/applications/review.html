@@ -1,31 +1,43 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import info %}
 {% block title %}Review Queue — INEEDTHATJOB{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Review Queue</h1>
-    <div class="flex items-center gap-3">
-      <span class="text-sm text-gray-400">{{ applications | length }} pending</span>
-      <button
-        hx-get="/review"
-        hx-target="#review-content"
-        hx-swap="innerHTML"
-        hx-select="#review-content"
-        class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">
-        ↻ Refresh
-      </button>
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Review Queue</h1>
+      <p class="text-sm text-gray-400 mt-0.5">
+        {{ applications | length }} pending
+        {{ info("Jobs that scored ≥55% match are queued here. Generate a resume and cover letter per job, then approve to send.") }}
+      </p>
     </div>
+    <button
+      hx-get="/review"
+      hx-target="#review-content"
+      hx-swap="innerHTML"
+      hx-select="#review-content"
+      class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50 gap-1">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" /></svg>
+      Refresh
+    </button>
   </div>
 
-  <!-- Filter bar -->
-  <div class="mb-4">
+  <!-- Filter + sort bar -->
+  <div class="flex gap-3 mb-5 flex-wrap">
     <input
       type="text"
       id="review-filter"
-      placeholder="Filter by title or company…"
-      oninput="filterReview(this.value)"
-      class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 placeholder-gray-300">
+      placeholder="Search by title or company…"
+      oninput="applyReview()"
+      class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 placeholder-gray-300">
+    <select id="review-sort" onchange="applyReview()"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700">
+      <option value="score-desc">Best match first</option>
+      <option value="score-asc">Worst match first</option>
+      <option value="title-asc">Title A→Z</option>
+      <option value="company-asc">Company A→Z</option>
+    </select>
   </div>
 
   <div id="review-content">
@@ -33,57 +45,35 @@
   {% if applications %}
     {% for app in applications %}
     {% set job = app.job %}
-    <div id="app-{{ app.id }}" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+    <div id="app-{{ app.id }}" class="card mb-5 overflow-hidden review-card"
+         data-score="{{ job.compatibility_score if job and job.compatibility_score is not none else -1 }}"
+         data-title="{{ (job.title or '') | lower }}"
+         data-company="{{ (job.company or '') | lower }}">
 
       <!-- Header -->
       <div class="flex items-start justify-between p-5 border-b border-gray-100">
-        <div>
+        <div class="min-w-0 mr-4">
           <h2 class="font-semibold text-gray-900">{{ job.title if job else 'Unknown Job' }}</h2>
-          <p class="text-sm text-gray-500 mt-0.5">
-            {{ job.company if job else '' }}
-            {% if job and job.location %} &middot; {{ job.location }}{% endif %}
+          <p class="text-sm text-gray-500 mt-0.5 flex flex-wrap items-center gap-x-2">
+            <span>{{ job.company if job else '' }}</span>
+            {% if job and job.location %}<span class="text-gray-300">·</span><span>{{ job.location }}</span>{% endif %}
             {% if job and job.compatibility_score is not none %}
-              &middot; <span class="font-medium {% if job.compatibility_score >= 0.7 %}text-green-600{% elif job.compatibility_score >= 0.45 %}text-yellow-600{% else %}text-red-400{% endif %}">
+              <span class="text-gray-300">·</span>
+              <span class="font-medium {% if job.compatibility_score >= 0.75 %}text-green-600{% elif job.compatibility_score >= 0.55 %}text-amber-500{% else %}text-red-400{% endif %}">
                 {{ (job.compatibility_score * 100) | int }}% match
               </span>
             {% endif %}
           </p>
-          {% if job %}<a href="{{ job.url }}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">View posting ↗</a>{% endif %}
+          {% if job %}<a href="{{ job.url }}" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 mt-1 inline-flex items-center gap-1">
+            View posting
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="10" height="10"><path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clip-rule="evenodd" /></svg>
+          </a>{% endif %}
         </div>
         {% include "partials/review_header_actions.html" %}
       </div>
 
       <!-- Resume preview -->
-      {% if app.resume_content %}
-      {% set rc = app.resume_content | fromjson %}
-      <div class="p-5 border-b border-gray-100 bg-gray-50">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Resume Preview</p>
-        {% if rc.get("summary") %}
-        <p class="text-sm text-gray-600 mb-3 italic leading-relaxed">{{ rc["summary"] }}</p>
-        {% endif %}
-        {% if rc.get("selected_skills") %}
-        <div class="flex flex-wrap gap-1 mb-4">
-          {% for skill in rc["selected_skills"] %}
-          <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded border border-blue-100">{{ skill }}</span>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if rc.get("experiences") %}
-        <div class="space-y-4">
-          {% for exp in rc["experiences"] %}
-          <div>
-            <p class="text-sm font-semibold text-gray-800">{{ exp.get("title","") }} — {{ exp.get("company","") }}</p>
-            <ul class="mt-1 space-y-1 pl-4 list-disc">
-              {% for bullet in exp.get("bullets", []) %}
-              <li class="text-sm text-gray-600">{{ bullet }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
-      {% endif %}
+      {% include "partials/resume_preview.html" %}
 
       <!-- Cover letter -->
       {% include "partials/cover_letter_block.html" %}
@@ -94,21 +84,41 @@
     </div>
     {% endfor %}
   {% else %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-    <p class="text-gray-400 text-sm mb-2">No applications awaiting review.</p>
-    <p class="text-xs text-gray-300">Run the pipeline — jobs scoring ≥ 55% get a tailored resume. Generate the cover letter and email here when reviewing.</p>
+  <div class="card p-12 text-center">
+    <svg class="mx-auto mb-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" width="40" height="40">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+    <p class="text-gray-500 font-medium mb-1">Queue is empty</p>
+    <p class="text-gray-400 text-sm mb-4">Run the job search — listings scoring ≥55% will appear here automatically.</p>
+    <a href="/" class="btn btn-primary btn-sm">Go to Dashboard</a>
   </div>
   {% endif %}
   </div>
 </div>
 
 <script>
-function filterReview(query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll('#review-content [id^="app-"]').forEach(card => {
-    const text = card.querySelector('h2, p')?.closest('div')?.textContent?.toLowerCase() || card.textContent.toLowerCase();
-    card.style.display = !q || text.includes(q) ? '' : 'none';
+function applyReview() {
+  var q = (document.getElementById('review-filter').value || '').toLowerCase();
+  var sort = document.getElementById('review-sort').value;
+  var container = document.getElementById('review-content');
+  var cards = Array.from(container.querySelectorAll('.review-card'));
+
+  cards.forEach(c => {
+    var text = (c.dataset.title + ' ' + c.dataset.company);
+    c.style.display = !q || text.includes(q) ? '' : 'none';
   });
+
+  var visible = cards.filter(c => c.style.display !== 'none');
+  visible.sort(function(a, b) {
+    if (sort === 'score-desc') return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+    if (sort === 'score-asc')  return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+    if (sort === 'title-asc')  return a.dataset.title.localeCompare(b.dataset.title);
+    if (sort === 'company-asc') return a.dataset.company.localeCompare(b.dataset.company);
+    return 0;
+  });
+  visible.forEach(c => container.appendChild(c));
 }
+// Apply default sort on load
+document.addEventListener('DOMContentLoaded', applyReview);
 </script>
 {% endblock %}

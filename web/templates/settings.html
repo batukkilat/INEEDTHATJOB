@@ -1,62 +1,179 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import info %}
 {% block title %}Settings — INEEDTHATJOB{% endblock %}
 
 {% block content %}
 <div class="max-w-xl">
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
-
-  {% if saved %}
-  <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">Preferences saved.</div>
-  {% endif %}
-
-  <!-- Schedule Card (HTMX-swappable) -->
-  {% include "partials/schedule_card.html" %}
-
-  <!-- SMTP Config (read-only — edit .env to change) -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Email (SMTP)</h2>
-      {% if smtp_config.configured %}
-      <span class="text-xs text-green-600 font-medium">● Configured</span>
-      {% else %}
-      <span class="text-xs text-red-400 font-medium">Not configured</span>
-      {% endif %}
-    </div>
-    <dl class="space-y-1 text-sm">
-      <div class="flex gap-2"><dt class="text-gray-400 w-28">Host</dt><dd class="text-gray-700 font-mono">{{ smtp_config.host }}:{{ smtp_config.port }}</dd></div>
-      <div class="flex gap-2"><dt class="text-gray-400 w-28">User</dt><dd class="text-gray-700 font-mono">{{ smtp_config.user or '—' }}</dd></div>
-      <div class="flex gap-2"><dt class="text-gray-400 w-28">From</dt><dd class="text-gray-700">{{ smtp_config.from_name or '' }} &lt;{{ smtp_config.from_email or '—' }}&gt;</dd></div>
-    </dl>
-    <p class="text-xs text-gray-400 mt-3">Edit <code>.env</code> to change SMTP credentials, then restart the server.</p>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+    <p class="text-sm text-gray-400 mt-0.5">Pipeline schedule, email, and job preferences.</p>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Job Preferences</h2>
+  {% if saved %}
+  <div class="mb-5 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
+    Preferences saved.
+  </div>
+  {% endif %}
+
+  <!-- Auto-Schedule -->
+  {% include "partials/schedule_card.html" %}
+
+  <!-- SMTP Config (editable) — 2-col: form left, guide right -->
+  <div class="card mt-5 overflow-hidden">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <div class="flex items-center gap-2">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Email (SMTP)</h2>
+        {{ info("Used to send application emails. Changes apply immediately and are saved to .env for persistence.") }}
+      </div>
+      {% if smtp_config.configured %}
+      <span class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" fill="currentColor" width="6" height="6"><circle cx="4" cy="4" r="3" /></svg>
+        Configured
+      </span>
+      {% else %}
+      <span class="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" fill="currentColor" width="6" height="6"><circle cx="4" cy="4" r="3" /></svg>
+        Not configured
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Body: 2-column grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+      <!-- Left: form + test -->
+      <div class="p-6 space-y-4">
+        {% if smtp_saved %}
+        <div class="p-2.5 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
+          SMTP credentials saved and active.
+        </div>
+        {% endif %}
+
+        <form method="post" action="/settings/smtp/save" class="space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1">SMTP Host</label>
+              <input type="text" name="smtp_host" value="{{ smtp_config.host }}" placeholder="smtp.gmail.com">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Port</label>
+              <input type="number" name="smtp_port" value="{{ smtp_config.port }}" placeholder="587">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Username / Email</label>
+            <input type="email" name="smtp_user" value="{{ smtp_config.user or '' }}" placeholder="you@gmail.com">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">
+              Password
+              {% if smtp_config.configured %}<span class="text-gray-300 font-normal ml-1">(blank = keep existing)</span>{% endif %}
+            </label>
+            <input type="password" name="smtp_password" value="" placeholder="{% if smtp_config.configured %}••••••••{% else %}App password or SMTP password{% endif %}">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">From Name</label>
+              <input type="text" name="from_name" value="{{ smtp_config.from_name or '' }}" placeholder="Your Name">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">From Email</label>
+              <input type="email" name="from_email" value="{{ smtp_config.from_email or '' }}" placeholder="you@gmail.com">
+            </div>
+          </div>
+          <div class="flex items-center gap-3 pt-1">
+            <button type="submit" class="btn btn-primary btn-sm">Save SMTP</button>
+            <p class="text-xs text-gray-400">Applies immediately, no restart.</p>
+          </div>
+        </form>
+
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-medium text-gray-500 mb-2">Test connection</p>
+          <form class="flex items-center gap-2"
+                hx-post="/settings/smtp/test"
+                hx-target="#smtp-test-result"
+                hx-swap="innerHTML">
+            <input type="email" name="to" placeholder="send test to this address"
+                   class="flex-1 text-sm" required>
+            <button type="submit" class="btn btn-sm btn-secondary">Send test</button>
+          </form>
+          <div id="smtp-test-result" class="mt-2 min-h-[1.25rem]"></div>
+        </div>
+      </div>
+
+      <!-- Right: setup guide always visible -->
+      <div class="p-6 bg-gray-50 text-xs text-gray-500 leading-relaxed space-y-4">
+        <p class="font-semibold text-gray-700 text-sm">How to set up email sending</p>
+
+        <div>
+          <p class="font-semibold text-gray-700 mb-1">Gmail (recommended)</p>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li>Go to <strong>myaccount.google.com → Security</strong> and enable <strong>2-Step Verification</strong>.</li>
+            <li>Under Security, find <strong>App passwords</strong>.</li>
+            <li>Select app: <em>Mail</em>, device: <em>Other</em> → type "INEEDTHATJOB" → click <strong>Generate</strong>.</li>
+            <li>Copy the 16-character password. <em>Your regular password won't work.</em></li>
+            <li>
+              Use these values:<br>
+              Host: <code class="bg-white px-1 rounded border border-gray-200">smtp.gmail.com</code>
+              Port: <code class="bg-white px-1 rounded border border-gray-200">587</code><br>
+              Username &amp; From Email: your Gmail address<br>
+              Password: the 16-character app password
+            </li>
+          </ol>
+        </div>
+
+        <div>
+          <p class="font-semibold text-gray-700 mb-1">Outlook / Hotmail</p>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li>Host: <code class="bg-white px-1 rounded border border-gray-200">smtp.office365.com</code> Port: <code class="bg-white px-1 rounded border border-gray-200">587</code></li>
+            <li>Username &amp; Password: your Outlook credentials.</li>
+          </ol>
+        </div>
+
+        <div>
+          <p class="font-semibold text-gray-700 mb-1">Other providers</p>
+          <p>Search "<em>your provider</em> SMTP settings" — every major email service has a help page.</p>
+        </div>
+
+        <p class="text-gray-400 italic pt-1 border-t border-gray-200">Credentials are saved only to <code class="bg-white px-1 rounded border border-gray-200">.env</code> on this computer. Never sent elsewhere.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Job Preferences -->
+  <div class="card p-6 mt-5">
+    <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">Job Preferences</h2>
     <form method="post" action="/settings/preferences" class="space-y-5" id="prefs-form">
 
-      <!-- Target Roles -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Target Roles</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Target Roles
+          {{ info("The job titles you're looking for. The app uses these when searching and scoring. E.g. 'Finance Staff', 'Accounting Officer'.") }}
+        </label>
         <div class="tag-input-widget" data-field="target_roles" data-initial="{{ prefs.target_roles or '[]' }}"></div>
         <input type="hidden" name="target_roles" id="target_roles_hidden">
       </div>
 
-      <!-- Target Locations -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Target Locations</label>
         <div class="tag-input-widget" data-field="target_locations" data-initial="{{ prefs.target_locations or '[]' }}"></div>
         <input type="hidden" name="target_locations" id="target_locations_hidden">
       </div>
 
-      <!-- Preferred Languages -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Languages</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Preferred Languages
+          {{ info("Job posting language preference. Set to 'Indonesian' or 'English' to bias toward bilingual or single-language postings.") }}
+        </label>
         <div class="tag-input-widget" data-field="preferred_languages" data-initial="{{ prefs.preferred_languages or '[]' }}"></div>
         <input type="hidden" name="preferred_languages" id="preferred_languages_hidden">
       </div>
 
-      <!-- Salary -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Min Salary (monthly)</label>
           <input type="number" name="min_salary" value="{{ prefs.min_salary or '' }}" placeholder="e.g. 10000000">
@@ -69,23 +186,26 @@
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-        <select name="salary_currency">
+        <select name="salary_currency" class="w-auto">
           <option {% if prefs.salary_currency == 'IDR' %}selected{% endif %}>IDR</option>
           <option {% if prefs.salary_currency == 'USD' %}selected{% endif %}>USD</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Company Size
+          {{ info("Startup: <200 employees. Mid: 200–1000. Enterprise: 1000+. Leave blank to see all.") }}
+        </label>
         <select name="company_size_preference">
-          <option value="">Any</option>
-          {% for v in ['startup', 'mid', 'enterprise'] %}
-          <option value="{{ v }}" {% if prefs.company_size_preference == v %}selected{% endif %}>{{ v | capitalize }}</option>
+          <option value="">Any size</option>
+          {% for v, label in [('startup', 'Startup'), ('mid', 'Mid-size'), ('enterprise', 'Enterprise')] %}
+          <option value="{{ v }}" {% if prefs.company_size_preference == v %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div class="pt-2">
+      <div class="pt-2 border-t border-gray-100">
         <button type="submit" class="btn btn-primary">Save Preferences</button>
       </div>
     </form>
@@ -105,19 +225,17 @@ document.querySelectorAll('.tag-input-widget').forEach(widget => {
     hidden.value = JSON.stringify(items);
     widget.innerHTML = '';
 
-    // Tag list
     const tags = document.createElement('div');
     tags.className = 'flex flex-wrap gap-2 mb-2';
     items.forEach((item, i) => {
       const tag = document.createElement('span');
-      tag.className = 'inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 text-sm border border-blue-200';
-      tag.innerHTML = `${item} <button type="button" class="text-blue-400 hover:text-blue-700 leading-none">&times;</button>`;
+      tag.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 text-sm border border-blue-100';
+      tag.innerHTML = `${item} <button type="button" class="text-blue-400 hover:text-blue-700 leading-none text-base">&times;</button>`;
       tag.querySelector('button').onclick = () => { items.splice(i, 1); render(); };
       tags.appendChild(tag);
     });
     if (items.length) widget.appendChild(tags);
 
-    // Add input
     const row = document.createElement('div');
     row.className = 'flex gap-2';
     const input = document.createElement('input');
@@ -137,7 +255,6 @@ document.querySelectorAll('.tag-input-widget').forEach(widget => {
     row.appendChild(input);
     row.appendChild(btn);
     widget.appendChild(row);
-    if (document.activeElement === input) input.focus();
   }
 
   render();

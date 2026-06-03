@@ -1,35 +1,42 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import info %}
 {% block title %}Profile — INEEDTHATJOB{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl">
   <div class="flex items-center justify-between mb-2">
-    <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+      <p class="text-sm text-gray-400 mt-0.5">The source of truth for all generated resumes and cover letters.</p>
+    </div>
     <button
       hx-get="/profile/import"
       hx-target="#import-zone"
       hx-swap="innerHTML"
-      class="btn btn-primary">
-      ↑ Import from Resume
+      class="btn btn-primary gap-1">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg>
+      Import Resume
     </button>
   </div>
-  <p class="text-sm text-gray-500 mb-4">This is the source of truth for all generated resumes and cover letters.</p>
 
   <div id="import-zone" class="mb-4"></div>
 
   <!-- Jump nav -->
-  <div class="flex gap-4 text-sm mb-8 border-b border-gray-200 pb-3">
-    <a href="#skills" class="text-blue-600 hover:underline">Skills</a>
-    <a href="#experience" class="text-blue-600 hover:underline">Experience</a>
-    <a href="#education" class="text-blue-600 hover:underline">Education</a>
-    <a href="#certifications" class="text-blue-600 hover:underline">Certifications</a>
-    <a href="#projects" class="text-blue-600 hover:underline">Projects</a>
+  <div class="flex gap-4 text-sm mb-6 border-b border-gray-200 pb-3 overflow-x-auto">
+    <a href="#skills"          class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Skills</a>
+    <a href="#experience"      class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Experience</a>
+    <a href="#education"       class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Education</a>
+    <a href="#certifications"  class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Certifications</a>
+    <a href="#projects"        class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Projects</a>
   </div>
 
   <!-- ── Skills ─────────────────────────────────────────────────────────── -->
   <section id="skills" class="mb-10 scroll-mt-4">
     <div class="flex items-center justify-between mb-3">
-      <h2 class="text-lg font-semibold text-gray-800">Skills</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-lg font-semibold text-gray-800">Skills</h2>
+        {{ info("Skills are matched against job descriptions to calculate your compatibility score. Add ATS keywords to improve matching.") }}
+      </div>
       <div class="flex gap-2">
         <button
           hx-get="/profile/skills/new"
@@ -45,16 +52,19 @@
       </div>
     </div>
     <div id="skill-add-form" class="mb-3"></div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="card overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Category</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Proficiency</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Years</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">ATS Keywords</th>
-            <th class="px-4 py-2"></th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Name</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Category</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Proficiency</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">Years</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">
+              ATS Keywords
+              {{ info("Extra keywords that appear in job postings for this skill. Helps the app detect matches even when job titles use different terminology.") }}
+            </th>
+            <th class="px-4 py-2.5"></th>
           </tr>
         </thead>
         <tbody id="skills-tbody" class="divide-y divide-gray-100">
@@ -64,7 +74,7 @@
         </tbody>
       </table>
       {% if not skills %}
-      <div class="px-4 py-6 text-sm text-gray-400 text-center">No skills yet.</div>
+      <div class="px-4 py-8 text-sm text-gray-400 text-center">No skills yet. Import your resume or add manually.</div>
       {% endif %}
     </div>
   </section>
@@ -93,7 +103,7 @@
       {% include "partials/experience_card.html" %}
       {% endfor %}
       {% if not experiences %}
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No experience yet.</div>
+      <div class="card p-8 text-sm text-gray-400 text-center">No experience yet. Import your resume or add manually.</div>
       {% endif %}
     </div>
   </section>
@@ -117,16 +127,16 @@
       </div>
     </div>
     <div id="education-add-form" class="mb-3"></div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="card overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Institution</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Degree</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Field</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Period</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">GPA</th>
-            <th class="px-4 py-2"></th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Institution</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Degree</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Field</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Period</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">GPA</th>
+            <th class="px-4 py-2.5"></th>
           </tr>
         </thead>
         <tbody id="education-tbody" class="divide-y divide-gray-100">
@@ -136,7 +146,7 @@
         </tbody>
       </table>
       {% if not education %}
-      <div class="px-4 py-6 text-sm text-gray-400 text-center">No education yet.</div>
+      <div class="px-4 py-8 text-sm text-gray-400 text-center">No education yet.</div>
       {% endif %}
     </div>
   </section>
@@ -160,15 +170,15 @@
       </div>
     </div>
     <div id="cert-add-form" class="mb-3"></div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="card overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-200">
+        <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Name</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Issuer</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Obtained</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-500">Expires</th>
-            <th class="px-4 py-2"></th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Name</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide">Issuer</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Obtained</th>
+            <th class="px-4 py-2.5 text-left font-medium text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Expires</th>
+            <th class="px-4 py-2.5"></th>
           </tr>
         </thead>
         <tbody id="certs-tbody" class="divide-y divide-gray-100">
@@ -178,7 +188,7 @@
         </tbody>
       </table>
       {% if not certifications %}
-      <div class="px-4 py-6 text-sm text-gray-400 text-center">No certifications yet.</div>
+      <div class="px-4 py-8 text-sm text-gray-400 text-center">No certifications yet.</div>
       {% endif %}
     </div>
   </section>
@@ -207,7 +217,7 @@
       {% include "partials/project_card.html" %}
       {% endfor %}
       {% if not projects %}
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-6 text-sm text-gray-400 text-center">No projects yet.</div>
+      <div class="card p-8 text-sm text-gray-400 text-center">No projects yet.</div>
       {% endif %}
     </div>
   </section>

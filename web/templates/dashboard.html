@@ -1,143 +1,390 @@
 {% extends "base.html" %}
+{% from "partials/macros.html" import info %}
 {% block title %}Dashboard — INEEDTHATJOB{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+{# ── Onboarding banner ───────────────────────────────────────────── #}
+{% if not has_profile %}
+<div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4">
+  <div class="mt-0.5 text-blue-400 flex-shrink-0">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    </svg>
+  </div>
+  <div>
+    <p class="font-semibold text-blue-900">Step 1 — Import your resume to get started.</p>
+    <p class="text-sm text-blue-700 mt-0.5">Your resume tells the app what skills and experience to match jobs against.</p>
+    <a href="/profile" class="mt-2 inline-block btn btn-primary btn-sm">Import Resume →</a>
+  </div>
+</div>
+{% elif not has_target_roles %}
+<div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-4">
+  <div class="mt-0.5 text-yellow-500 flex-shrink-0">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+  <div>
+    <p class="font-semibold text-yellow-900">Step 2 — Set the job titles you're looking for.</p>
+    <p class="text-sm text-yellow-700 mt-0.5">Tell the app which roles to search for (e.g. "Finance Staff", "Accounting Officer").</p>
+    <a href="/settings" class="mt-2 inline-block btn btn-sm border border-yellow-400 text-yellow-800 hover:bg-yellow-100">Open Settings →</a>
+  </div>
+</div>
+{% elif not last_run %}
+<div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-4">
+  <div class="mt-0.5 text-green-500 flex-shrink-0">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+  <div>
+    <p class="font-semibold text-green-900">You're all set — start your first job search below.</p>
+    <p class="text-sm text-green-700 mt-0.5">The app will find, score, and queue matching jobs for your review.</p>
+  </div>
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-  <!-- Left column -->
+  {# ── Left column ─────────────────────────────────────────────── #}
   <div class="lg:col-span-2 space-y-6">
 
-    <!-- Stats -->
-    <div id="stats" class="grid grid-cols-3 gap-4">
+    {# Stats #}
+    <div id="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {% include "partials/stats.html" %}
     </div>
 
-    <!-- Pipeline -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Pipeline</h2>
-      {% if last_run %}
-      <p class="text-xs text-gray-400 mb-3">Last run: {{ last_run[:16] | replace("T", " ") }} UTC</p>
-      {% else %}
-      <p class="text-xs text-gray-400 mb-3">Never run</p>
-      {% endif %}
+    {# Job Funnel #}
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Match Quality</h2>
+          {{ info("How well the found jobs match your profile. A higher percentage means a stronger fit based on your skills and experience.") }}
+        </div>
+        {% if scored_total %}
+        <span class="text-xs text-gray-400">{{ scored_total }} jobs scored</span>
+        {% endif %}
+      </div>
 
-      <!-- Platform selector -->
-      <div class="flex gap-4 mb-3">
-        {% for name in ["linkedin", "glints", "jobstreet", "x", "threads"] %}
-        <label class="flex items-center gap-1.5 text-sm">
-          <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
-                 checked class="rounded border-gray-300">
-          {% if name == "x" %}X (Twitter){% elif name == "threads" %}Threads{% else %}{{ name | capitalize }}{% endif %}
-        </label>
+      {% if scored_total %}
+      <div class="space-y-3">
+        {% for band in score_bands %}
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-gray-500 w-16 flex-shrink-0">{{ band.label }}</span>
+          <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full {{ band.color }} rounded-full transition-all duration-700"
+                 style="width: {{ band.pct }}%"></div>
+          </div>
+          <span class="text-xs font-medium text-gray-700 w-16 text-right flex-shrink-0">
+            {{ band.count }} <span class="text-gray-400 font-normal">({{ band.pct }}%)</span>
+          </span>
+        </div>
         {% endfor %}
       </div>
 
+      {# Last run summary strip #}
+      {% if last_run_summary %}
+      <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span class="text-xs text-gray-400">Last search {{ last_run_summary.timestamp[:10] }}:</span>
+        {% if last_run_summary.scraped %}<span class="text-xs text-gray-500">{{ last_run_summary.scraped }} found</span>{% endif %}
+        {% if last_run_summary.scored %}<span class="text-xs text-gray-400">·</span><span class="text-xs text-gray-500">{{ last_run_summary.scored }} scored</span>{% endif %}
+        {% if last_run_summary.queued %}<span class="text-xs text-gray-400">·</span><span class="text-xs text-gray-500">{{ last_run_summary.queued }} queued</span>{% endif %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="py-8 text-center">
+        <p class="text-sm text-gray-400">Run a job search to see how well listings match your profile.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {# Pipeline card #}
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-semibold text-gray-900">Job Search</h2>
+          {{ info("Searches selected job platforms, scores each listing against your profile, then queues the best matches for your review.") }}
+        </div>
+        {% if ai_pct >= 80 %}
+        <span class="text-xs px-2 py-1 rounded-full {% if ai_pct >= 95 %}bg-red-100 text-red-600{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+          AI credits {{ ai_pct | int }}% used today
+        </span>
+        {% endif %}
+      </div>
+
+      {# Step progress #}
+      <div class="flex items-center gap-2 mb-5">
+        {% set stage = stage or "" %}
+        {% set step_defs = [
+          (["scraping","fetching"], "Finding Jobs",       "Search job boards for new listings"),
+          (["scoring"],             "Scoring Matches",    "Rank each job against your profile"),
+          (["queuing"],             "Queuing for Review", "Add top matches to your review queue"),
+        ] %}
+        {% for stages, label, tip in step_defs %}
+        {% set active = is_pipeline_running and stage in stages %}
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs
+          {% if active %}bg-blue-100 text-blue-700 font-semibold{% else %}bg-gray-100 text-gray-400{% endif %}">
+          {% if active %}<span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse flex-shrink-0"></span>{% endif %}
+          <span>{{ label }}</span>
+          {{ info(tip) }}
+        </div>
+        {% if not loop.last %}<span class="text-gray-200 text-sm">›</span>{% endif %}
+        {% endfor %}
+      </div>
+
+      {# Source checkboxes #}
+      <div class="flex flex-wrap gap-3 mb-4" id="platform-selector">
+        {% set platform_tips = {
+          "linkedin":  "LinkedIn — largest professional network in Indonesia",
+          "glints":    "Glints — popular Southeast Asian job platform",
+          "jobstreet": "JobStreet — major Indonesian job board",
+          "x":         "X (Twitter) — job posts from companies and recruiters",
+          "threads":   "Threads — emerging job opportunities",
+        } %}
+        {% for name, tip in platform_tips.items() %}
+        <div class="flex items-center gap-1 text-sm text-gray-600">
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
+                   class="rounded border-gray-300 platform-cb">
+            {% if name == "x" %}X (Twitter){% elif name == "threads" %}Threads{% else %}{{ name | capitalize }}{% endif %}
+          </label>
+          {{ info(tip) }}
+        </div>
+        {% endfor %}
+      </div>
+      <script>
+        (function() {
+          var DEFAULTS = ["linkedin", "glints", "jobstreet"];
+          var saved = JSON.parse(localStorage.getItem("ij_platforms") || "null");
+          var active = saved || DEFAULTS;
+          document.querySelectorAll(".platform-cb").forEach(function(cb) {
+            cb.checked = active.indexOf(cb.value) !== -1;
+            cb.addEventListener("change", function() {
+              var checked = Array.from(document.querySelectorAll(".platform-cb:checked")).map(function(c){return c.value;});
+              localStorage.setItem("ij_platforms", JSON.stringify(checked));
+            });
+          });
+        })();
+      </script>
+
+      {# Controls #}
       <form id="pipeline-form"
             hx-post="/api/pipeline/run"
             hx-target="#pipeline-status"
             hx-swap="outerHTML"
-            hx-indicator="#pipeline-btn-spinner"
-            class="flex items-center gap-3">
-        <button type="submit" class="btn btn-primary">Jobmaxxing</button>
+            class="flex items-center gap-3 flex-wrap">
+        <button type="submit"
+                id="pipeline-btn"
+                {% if not has_profile or not has_target_roles %}disabled title="Complete setup above first"{% endif %}
+                class="pipeline-run-btn btn btn-primary relative overflow-hidden {% if not has_profile or not has_target_roles %}opacity-50 cursor-not-allowed{% endif %}">
+          <span class="btn-label flex items-center gap-2">
+            {% if not is_pipeline_running %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+            {% endif %}
+            <span id="btn-text">{% if is_pipeline_running %}Searching…{% else %}Start Job Search{% endif %}</span>
+          </span>
+          <span class="btn-loader" style="display:none; align-items:center; gap:8px">
+            <span class="equalizer"><span></span><span></span><span></span><span></span></span>
+            <span id="fun-msg" class="text-sm font-medium">warming up…</span>
+          </span>
+        </button>
+        {% if is_pipeline_running %}
         <button type="button"
           hx-post="/api/pipeline/stop"
           hx-target="#pipeline-status"
           hx-swap="outerHTML"
-          class="btn btn-sm border border-red-200 text-red-500 hover:bg-red-50 {% if not is_pipeline_running %}opacity-40 pointer-events-none{% endif %}">
+          class="btn btn-sm border border-red-200 text-red-500 hover:bg-red-50">
           Stop
         </button>
-        <button type="button"
-          hx-post="/api/pipeline/rescore"
-          hx-target="#rescore-status"
-          hx-confirm="Reset all scored jobs back to 'new' so they get re-scored on next run?"
-          class="btn btn-sm border border-gray-200 text-gray-500 hover:bg-gray-50">
-          Re-score all
-        </button>
-        <span id="rescore-status" class="text-sm"></span>
-        <svg id="pipeline-btn-spinner" class="htmx-indicator w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-        </svg>
-        <div id="pipeline-status" class="text-sm text-gray-400">
-          {% if is_pipeline_running %}
-          <span hx-get="/api/pipeline/status" hx-trigger="every 5s" hx-swap="outerHTML">Running…</span>
-          {% endif %}
-        </div>
+        {% endif %}
+        <span id="pipeline-status" style="display:none"
+          {% if is_pipeline_running %}hx-get="/api/pipeline/status" hx-trigger="every 5s" hx-swap="outerHTML"{% endif %}>
+        </span>
       </form>
 
-      <!-- Progress bar -->
-      <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      {# Shimmer progress bar — visible only when running #}
+      <div class="mt-4 h-0.5 bg-gray-100 rounded-full overflow-hidden">
         <div id="pipeline-progress"
-             class="h-full bg-blue-500 rounded-full transition-all duration-700 ease-in-out"
-             style="width: {% if is_pipeline_running %}60%{% else %}0%{% endif %}">
+             class="h-full rounded-full transition-all duration-1000 ease-in-out {% if is_pipeline_running %}progress-shimmer{% endif %}"
+             style="width: {% if is_pipeline_running %}70%{% else %}0%{% endif %}; background: {% if not is_pipeline_running %}transparent{% endif %}">
         </div>
       </div>
-      <p class="text-xs text-gray-400 mt-2">
-        Scrapes job listings → scores compatibility → queues for review.
-        Set target roles in <a href="/settings" class="underline">Settings</a> first.
-      </p>
+
+      <script>
+        var _funMessages = {
+          scraping: [
+            "sweet-talking the job boards…",
+            "speed-reading 500 listings…",
+            "stalking recruiters (legally)…",
+            "negotiating with the algorithms…",
+            "asking LinkedIn very nicely…",
+            "infiltrating Glints HQ…",
+            "harvesting opportunity seeds…",
+            "scanning the job horizon…",
+          ],
+          scoring: [
+            "judging your worth (kindly)…",
+            "playing career matchmaker…",
+            "crunching compatibility math…",
+            "comparing your skills to the universe…",
+            "running the vibe check…",
+            "calculating your destiny…",
+            "doing the math so you don't have to…",
+            "consulting the opportunity oracle…",
+          ],
+          queuing: [
+            "hand-picking the good ones…",
+            "setting the table for you…",
+            "curating your dream queue…",
+            "wrapping your best matches…",
+            "almost there, stay cool…",
+          ],
+          default: [
+            "warming up the engines…",
+            "brewing something good…",
+            "making magic happen…",
+            "on it like a hiring manager…",
+          ]
+        };
+        var _msgTimer = null;
+        var _currentStage = 'default';
+
+        function _pickMessage(stage) {
+          var pool = _funMessages[stage] || _funMessages.default;
+          return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        function _startMessages(stage) {
+          _currentStage = stage || 'default';
+          var el = document.getElementById('fun-msg');
+          if (!el) return;
+          el.textContent = _pickMessage(_currentStage);
+          clearInterval(_msgTimer);
+          _msgTimer = setInterval(function() {
+            el.style.opacity = '0';
+            setTimeout(function() {
+              el.textContent = _pickMessage(_currentStage);
+              el.style.opacity = '1';
+            }, 300);
+          }, 3500);
+        }
+
+        document.getElementById('pipeline-form').addEventListener('htmx:beforeRequest', function() {
+          var btn = document.getElementById('pipeline-btn');
+          btn.disabled = true;
+          btn.querySelector('.btn-label').style.display = 'none';
+          var loader = btn.querySelector('.btn-loader');
+          loader.style.display = 'flex';
+          _startMessages('default');
+          var bar = document.getElementById('pipeline-progress');
+          bar.classList.add('progress-shimmer');
+          bar.style.width = '15%';
+        });
+
+        // Expose timer globally so _DONE_SCRIPT can clear it
+        window._msgTimer = null;
+        var _origStart = _startMessages;
+        _startMessages = function(stage) { _origStart(stage); window._msgTimer = _msgTimer; };
+
+        // Detect stage from data-stage attribute on the hidden span
+        document.addEventListener('htmx:afterSwap', function(e) {
+          var el = e.detail.target;
+          if (!el) return;
+          var statusEl = el.id === 'pipeline-status' ? el : el.querySelector('#pipeline-status');
+          if (statusEl && statusEl.dataset && statusEl.dataset.stage) {
+            var stage = statusEl.dataset.stage;
+            var mapped = stage === 'scraping' || stage === 'fetching' ? 'scraping'
+                       : stage === 'scoring' ? 'scoring'
+                       : stage === 'queuing' ? 'queuing'
+                       : _currentStage;
+            if (mapped !== _currentStage) _startMessages(mapped);
+          }
+        });
+      </script>
     </div>
 
-    <!-- Groq Usage Meters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Groq Daily Usage</h2>
-      <div class="space-y-3">
-        {% for m in usage_meters %}
-        {% set color = "bg-red-500" if m.pct >= 90 else ("bg-yellow-400" if m.pct >= 70 else "bg-blue-500") %}
-        <div>
-          <div class="flex justify-between items-baseline mb-1">
-            <span class="text-xs font-medium text-gray-600 truncate" title="{{ m.model }}">{{ m.model }}</span>
-            <span class="text-xs text-gray-400 ml-2 whitespace-nowrap">
-              {{ "{:,}".format(m.used) }} / {{ "{:,}".format(m.limit) }} tok
-              {% if m.calls %}&middot; {{ m.calls }} call{{ "s" if m.calls != 1 }}{% endif %}
-            </span>
-          </div>
-          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full {{ color }} rounded-full transition-all duration-500"
-                 style="width: {{ m.pct }}%"></div>
-          </div>
-          {% if m.pct >= 90 %}
-          <p class="text-xs text-red-500 mt-0.5">{{ m.pct }}% — near limit</p>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      <p class="text-xs text-gray-400 mt-3">Resets at midnight UTC. Override limits via <code class="font-mono">SCORING_MODEL_TPD</code> / <code class="font-mono">GENERATION_MODEL_TPD</code> in .env.</p>
-    </div>
-
-    <!-- Activity feed -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h2>
-        <a href="/jobs" class="text-xs text-blue-500 hover:underline">View all jobs →</a>
-      </div>
-      {% if recent_activity %}
-        <ul class="space-y-2">
-          {% for log in recent_activity %}
-          <li class="flex items-start gap-3 text-sm">
-            <span class="text-gray-400 whitespace-nowrap font-mono text-xs mt-0.5">{{ log.timestamp[:16] | replace("T", " ") }}</span>
-            <span class="badge flex-shrink-0
-              {% if log.action in ['submitted', 'pipeline_complete'] %}badge-green
-              {% elif log.action in ['failed'] %}badge-red
-              {% elif log.action in ['approved', 'scored'] %}badge-blue
-              {% elif log.action in ['scraped', 'pipeline_scrape_start'] %}badge-yellow
-              {% else %}badge-gray{% endif %}">{{ log.action }}</span>
-            <span class="text-gray-600">{{ log.details or '' }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-sm text-gray-400">No activity yet. Run the pipeline to get started.</p>
-      {% endif %}
-    </div>
   </div>
 
-  <!-- Right column — live log (aligned with stats row) -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 lg:sticky lg:top-6 flex flex-col"
-       style="max-height: calc(100vh - 5rem); overflow: hidden;">
-    {% include "partials/pipeline_log.html" with context %}
+  {# ── Right column ──────────────────────────────────────────────── #}
+  <div class="space-y-5 lg:sticky lg:top-6">
+
+    {# Next action #}
+    {% if pending_review %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div class="flex items-center gap-2 mb-1">
+        <p class="text-sm font-semibold text-yellow-900">{{ pending_review }} job{{ "s" if pending_review != 1 }} waiting for you</p>
+        {{ info("These jobs matched your profile. Open each one, generate a tailored resume, then approve or skip.") }}
+      </div>
+      <p class="text-xs text-yellow-700 mb-3">Generate a resume and decide whether to apply.</p>
+      <a href="/review" class="btn btn-sm review-queue-btn border-0">Go to Review Queue →</a>
+    </div>
+    {% elif good_matches and not is_pipeline_running %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <p class="text-sm font-semibold text-blue-900 mb-1">{{ good_matches }} strong matches in the database</p>
+      <p class="text-xs text-blue-700">Run a search to queue them for review.</p>
+    </div>
+    {% elif has_profile and has_target_roles and not is_pipeline_running %}
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <p class="text-sm font-semibold text-gray-700 mb-1">Ready to search</p>
+      <p class="text-xs text-gray-500">Click "Start Job Search" to find new jobs.</p>
+    </div>
+    {% endif %}
+
+    {# Top matches #}
+    {% if recent_jobs %}
+    <div class="card p-4">
+      <div class="flex items-center gap-1.5 mb-3">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Top Matches</p>
+        {{ info("Your highest-scoring jobs. Click any to see the full listing.") }}
+      </div>
+      <div class="space-y-2">
+        {% for job in recent_jobs %}
+        <a href="/jobs/{{ job.id }}"
+           class="flex items-center justify-between gap-2 p-2 rounded-md hover:bg-gray-50 border border-gray-100 block">
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-gray-800 truncate">{{ job.title }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ job.company }}</p>
+          </div>
+          {% if job.compatibility_score is not none %}
+          <span class="text-xs font-bold flex-shrink-0
+            {% if job.compatibility_score >= 0.7 %}text-green-600
+            {% elif job.compatibility_score >= 0.45 %}text-yellow-500
+            {% else %}text-red-400{% endif %}">
+            {{ (job.compatibility_score * 100) | int }}%
+          </span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# AI usage — only show when notable #}
+    {% if ai_pct >= 50 %}
+    <div class="card p-4">
+      <div class="flex items-center gap-1.5 mb-2">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">AI Credits Today</p>
+        {{ info("The app uses AI to score jobs and generate resumes. Credits reset at midnight UTC. High usage may slow down searches.") }}
+      </div>
+      {% for m in usage_meters %}
+      <div class="mb-2">
+        <div class="flex justify-between text-xs mb-1 ai-credits-label">
+          <span>{{ "Scoring" if loop.first else "Generation" }}</span>
+          <span class="{% if m.pct >= 90 %}text-red-500 font-medium{% endif %}">{{ m.pct | int }}%</span>
+        </div>
+        <div class="h-1.5 rounded-full overflow-hidden ai-credits-track">
+          <div class="h-full rounded-full ai-credits-bar
+            {% if m.pct >= 90 %}ai-credits-danger{% elif m.pct >= 70 %}ai-credits-warn{% else %}ai-credits-ok{% endif %}"
+               style="width: {{ m.pct }}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+      <p class="text-xs mt-2 ai-credits-reset">Resets midnight UTC.</p>
+    </div>
+    {% endif %}
+
   </div>
 
 </div>

@@ -1,8 +1,8 @@
 import asyncio
-import json
 import random
 from datetime import datetime, timezone
-from typing import Any
+
+from curl_cffi import requests as cffi_requests
 
 from config import settings
 from db.models import Job
@@ -12,67 +12,67 @@ from utils.logging import get_logger
 log = get_logger(__name__)
 
 _BASE_URL = "https://id.jobstreet.com"
+_SEARCH_URL = f"{_BASE_URL}/api/jobsearch/v5/search"
+
+_HEADERS = {
+    "accept": "application/json",
+    "origin": _BASE_URL,
+    "referer": f"{_BASE_URL}/Software-Engineer-jobs/in-Indonesia",
+    "user-agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+    ),
+    "x-seek-site": "chalice",
+}
+
+_REMOTE_LABELS = {"jarak jauh", "remote", "work from home", "wfh"}
+_HYBRID_LABELS = {"hibrida", "hybrid"}
 
 
 def _parse_job_item(item: dict, scraped_at: str) -> Job | None:
-    external_id = str(item.get("id") or item.get("jobId") or item.get("listingId") or "")
+    external_id = str(item.get("id") or "")
     if not external_id:
         return None
 
-    title = item.get("title") or item.get("jobTitle") or item.get("positionTitle") or ""
+    title = item.get("title") or ""
     if not title:
         return None
 
-    advertiser = item.get("advertiser") or item.get("employer") or {}
-    company = (
-        advertiser.get("description") or advertiser.get("name")
-        or item.get("companyName") or ""
-    )
+    company = item.get("companyName") or (item.get("advertiser") or {}).get("description") or ""
 
-    location_data = item.get("jobLocation") or item.get("location") or {}
-    if isinstance(location_data, dict):
-        city = (
-            location_data.get("label") or location_data.get("city")
-            or location_data.get("area") or ""
-        )
-        location = city or "Indonesia"
-    elif isinstance(location_data, list) and location_data:
-        location = location_data[0] if isinstance(location_data[0], str) else "Indonesia"
-    else:
-        location = str(location_data) if location_data else "Indonesia"
+    locations = item.get("locations") or []
+    location = locations[0].get("label") if locations else "Indonesia"
+    if not location:
+        location = "Indonesia"
 
-    work_types = item.get("workTypes") or item.get("jobType") or []
     remote_type = None
-    if isinstance(work_types, list):
-        for wt in work_types:
+    arrangements = (item.get("workArrangements") or {}).get("data") or []
+    for arr in arrangements:
+        label = (arr.get("label") or {}).get("text", "").lower()
+        if label in _REMOTE_LABELS:
+            remote_type = "remote"
+            break
+        if label in _HYBRID_LABELS:
+            remote_type = "hybrid"
+            break
+    if remote_type is None:
+        for wt in item.get("workTypes") or []:
             wt_lower = str(wt).lower()
             if "remote" in wt_lower:
                 remote_type = "remote"
                 break
-            elif "hybrid" in wt_lower:
+            if "hybrid" in wt_lower or "hibrida" in wt_lower:
                 remote_type = "hybrid"
-    elif isinstance(work_types, str):
-        if "remote" in work_types.lower():
-            remote_type = "remote"
-        elif "hybrid" in work_types.lower():
-            remote_type = "hybrid"
+                break
 
-    job_url = item.get("jobUrl") or item.get("url") or f"{_BASE_URL}/job/{external_id}"
-    if job_url and not job_url.startswith("http"):
-        job_url = _BASE_URL + job_url
-
-    posted_date = item.get("listingDate") or item.get("postedAt") or item.get("createdAt") or None
-
-    salary_data = item.get("salary") or {}
-    salary_min = salary_data.get("minimum") if isinstance(salary_data, dict) else None
-    salary_max = salary_data.get("maximum") if isinstance(salary_data, dict) else None
-
-    teaser = item.get("teaser") or item.get("abstract") or item.get("snippet") or ""
+    url = f"{_BASE_URL}/job/{external_id}"
+    posted_date = item.get("listingDate") or None
+    description = item.get("teaser") or None
 
     return Job(
         platform="jobstreet",
         external_id=external_id,
-        url=job_url,
+        url=url,
         title=title,
         company=company,
         location=location,
@@ -80,31 +80,10 @@ def _parse_job_item(item: dict, scraped_at: str) -> Job | None:
         posted_date=posted_date,
         scraped_at=scraped_at,
         status="new",
-        salary_min=float(salary_min) if salary_min else None,
-        salary_max=float(salary_max) if salary_max else None,
-        description=teaser if teaser else None,
+        salary_min=None,
+        salary_max=None,
+        description=description,
     )
-
-
-def _extract_jobs_from_response(data: Any) -> list[dict]:
-    """Walk common JobStreet (Seek) response shapes."""
-    if not isinstance(data, dict):
-        return []
-    # Chalice: data.data[]
-    items = data.get("data") or []
-    if isinstance(items, list) and items:
-        return items
-    # Wrapped: jobs[]
-    items = data.get("jobs") or data.get("results") or data.get("jobSummaries") or []
-    if isinstance(items, list):
-        return items
-    # NextData embedded: props.pageProps.jobDetails or .jobs
-    props = (data.get("props") or {}).get("pageProps") or {}
-    for key in ("jobs", "jobDetails", "results"):
-        items = props.get(key) or []
-        if isinstance(items, list) and items:
-            return items
-    return []
 
 
 class JobStreetScraper(BaseScraper):
@@ -114,181 +93,107 @@ class JobStreetScraper(BaseScraper):
         if not keywords:
             keywords = ["Backend Engineer", "Software Engineer", "Python Developer"]
 
-        try:
-            from playwright.async_api import async_playwright
-        except ImportError:
-            log.error("playwright_not_installed", hint="pip install playwright && playwright install chromium")
-            return []
-
-        if not settings.jobstreet_session_cookie:
-            log.warning("jobstreet_no_session_cookie",
-                        hint="Set JOBSTREET_SESSION_COOKIE in .env — log in at id.jobstreet.com, copy cookie header value")
-
         jobs: list[Job] = []
         seen_ids: set[str] = set()
         scraped_at = datetime.now(timezone.utc).isoformat()
 
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
-                locale="id-ID",
-            )
+        for keyword in keywords:
+            log.info("jobstreet_scrape_keyword", keyword=keyword)
+            for page_num in range(1, max_pages + 1):
+                params = {
+                    "siteKey": "ID-Main",
+                    "where": "Indonesia",
+                    "keywords": keyword,
+                    "page": page_num,
+                    "pageSize": 30,
+                    "locale": "id-ID",
+                }
+                try:
+                    resp = await asyncio.to_thread(
+                        cffi_requests.get,
+                        _SEARCH_URL,
+                        params=params,
+                        headers=_HEADERS,
+                        impersonate="chrome",
+                        timeout=30,
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                except Exception as e:
+                    log.warning("jobstreet_request_failed", keyword=keyword, page=page_num, error=str(e))
+                    break
 
-            if settings.jobstreet_session_cookie:
-                for name, val in _parse_cookie_string(settings.jobstreet_session_cookie):
-                    try:
-                        await context.add_cookies([{
-                            "name": name, "value": val,
-                            "domain": ".jobstreet.com", "path": "/",
-                        }])
-                    except Exception:
-                        pass
+                items = data.get("data") or []
+                total = data.get("totalCount", 0)
 
-            page = await context.new_page()
-            captured: list[dict] = []
+                if not items:
+                    log.warning("jobstreet_no_jobs", keyword=keyword, page=page_num)
+                    break
 
-            async def on_response(response):
-                url = response.url
-                # Intercept Seek/JobStreet API calls
-                if response.status == 200 and (
-                    "chalice-search" in url
-                    or "job-search" in url
-                    or "jobsummary" in url
-                    or ("jobstreet" in url and "/api/" in url)
-                ):
-                    try:
-                        data = await response.json()
-                        items = _extract_jobs_from_response(data)
-                        if items:
-                            captured.extend(items)
-                            log.debug("jobstreet_intercepted", count=len(items), url=url)
-                    except Exception:
-                        pass
+                before = len(jobs)
+                for item in items:
+                    job = _parse_job_item(item, scraped_at)
+                    if job and job.external_id not in seen_ids:
+                        seen_ids.add(job.external_id)
+                        jobs.append(job)
 
-            page.on("response", on_response)
+                log.debug("jobstreet_page_done", keyword=keyword, page=page_num,
+                          new=len(jobs) - before, total=len(jobs))
 
-            for keyword in keywords:
-                log.info("jobstreet_scrape_keyword", keyword=keyword)
-                # JobStreet URL pattern: /Software-Engineer-jobs/in-Indonesia?page=N
-                slug = keyword.replace(" ", "-")
-                for page_num in range(1, max_pages + 1):
-                    captured.clear()
-                    url = f"{_BASE_URL}/{slug}-jobs/in-Indonesia?page={page_num}"
-                    try:
-                        await page.goto(url, wait_until="networkidle", timeout=20000)
-                    except Exception as e:
-                        log.warning("jobstreet_page_load_timeout", keyword=keyword, page=page_num, error=str(e))
-                        break
+                fetched_so_far = (page_num - 1) * 30 + len(items)
+                if fetched_so_far >= total or len(jobs) == before:
+                    break
 
-                    if not captured:
-                        # Try __NEXT_DATA__ embedded JSON
-                        items = await _extract_next_data(page)
-                        if items:
-                            captured.extend(items)
-
-                    if not captured:
-                        log.warning("jobstreet_no_data_intercepted", keyword=keyword, page=page_num,
-                                    hint="Try logging in and updating JOBSTREET_SESSION_COOKIE")
-                        break
-
-                    before = len(jobs)
-                    for item in captured:
-                        job = _parse_job_item(item, scraped_at)
-                        if job and job.external_id and job.external_id not in seen_ids:
-                            seen_ids.add(job.external_id)
-                            jobs.append(job)
-
-                    if len(jobs) == before:
-                        break
-                    await asyncio.sleep(random.uniform(2.0, 4.0))
-
-            await browser.close()
+                await asyncio.sleep(random.uniform(1.0, 2.0))
 
         log.info("jobstreet_scrape_complete", total=len(jobs))
         return jobs
 
     async def fetch_description(self, external_id: str) -> str | None:
+        # GraphQL detail endpoint (from HAR)
+        query = """
+        query jobDetails($jobId: ID!, $zone: Zone!, $locale: Locale!, $languageCode: LanguageCodeIso!, $countryCode: CountryCodeIso2!, $timezone: Timezone!) {
+          jobDetails(id: $jobId, tracking: {channel: "WEB", jobDetailsViewedCorrelationId: "", sessionId: ""}) {
+            job {
+              content(platform: WEB)
+              title
+              __typename
+            }
+            __typename
+          }
+        }
+        """
+        payload = {
+            "operationName": "jobDetails",
+            "variables": {
+                "jobId": external_id,
+                "zone": "asia-4",
+                "locale": "id-ID",
+                "languageCode": "id",
+                "countryCode": "ID",
+                "timezone": "Asia/Jakarta",
+            },
+            "query": query,
+        }
+        gql_headers = {
+            "content-type": "application/json",
+            "origin": _BASE_URL,
+            "referer": f"{_BASE_URL}/job/{external_id}",
+            "x-seek-site": "chalice",
+            "user-agent": _HEADERS["user-agent"],
+        }
         try:
-            from playwright.async_api import async_playwright
-        except ImportError:
+            resp = await asyncio.to_thread(
+                cffi_requests.post,
+                f"{_BASE_URL}/graphql",
+                json=payload,
+                headers=gql_headers,
+                impersonate="chrome",
+                timeout=15,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return (data.get("data") or {}).get("jobDetails", {}).get("job", {}).get("content")
+        except Exception as e:
+            log.warning("jobstreet_fetch_description_failed", external_id=external_id, error=str(e))
             return None
-
-        url = f"{_BASE_URL}/job/{external_id}"
-        description: list[str] = []
-
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context()
-            if settings.jobstreet_session_cookie:
-                for name, val in _parse_cookie_string(settings.jobstreet_session_cookie):
-                    try:
-                        await context.add_cookies([{"name": name, "value": val, "domain": ".jobstreet.com", "path": "/"}])
-                    except Exception:
-                        pass
-            page = await context.new_page()
-
-            try:
-                await page.goto(url, wait_until="networkidle", timeout=15000)
-            except Exception:
-                pass
-
-            # Try __NEXT_DATA__ for full description
-            items = await _extract_next_data(page)
-            if items:
-                for item in items:
-                    desc = item.get("description") or item.get("jobDescription") or ""
-                    if desc:
-                        description.append(desc)
-                        break
-
-            if not description:
-                el = await page.query_selector("[data-automation='jobDescription'], [class*='job-description']")
-                if el:
-                    description.append(await el.inner_text())
-
-            await browser.close()
-
-        return description[0] if description else None
-
-
-async def _extract_next_data(page) -> list[dict]:
-    """Extract job items from Next.js __NEXT_DATA__ JSON blob in page."""
-    try:
-        content = await page.evaluate(
-            "() => document.getElementById('__NEXT_DATA__')?.textContent"
-        )
-        if not content:
-            return []
-        nd = json.loads(content)
-        props = (nd.get("props") or {}).get("pageProps") or {}
-        for key in ("jobs", "jobDetails", "results", "jobSummaries"):
-            items = props.get(key)
-            if isinstance(items, list) and items:
-                return items
-        # Some versions nest deeper
-        data = props.get("data") or {}
-        for key in ("jobs", "results", "jobSummaries"):
-            items = data.get(key)
-            if isinstance(items, list) and items:
-                return items
-    except Exception:
-        pass
-    return []
-
-
-def _parse_cookie_string(cookie_str: str) -> list[tuple[str, str]]:
-    """Parse 'name=value; name2=value2' into list of (name, value) pairs."""
-    pairs = []
-    for part in cookie_str.split(";"):
-        part = part.strip()
-        if "=" in part:
-            name, _, val = part.partition("=")
-            pairs.append((name.strip(), val.strip()))
-        elif part:
-            pairs.append(("jobsdb_session", part))
-    return pairs
