@@ -14,13 +14,11 @@ class Settings(BaseSettings):
     generation_model_tpd: int = 100_000
 
     # Scraping
-    scrape_platforms: str = '["linkedin", "glints", "jobstreet", "x", "threads"]'
+    scrape_platforms: str = '["linkedin", "glints", "jobstreet"]'
     scrape_max_pages: int = 5
     linkedin_session_cookie: str = ""
     glints_session_cookie: str = ""
     jobstreet_session_cookie: str = ""
-    x_auth_token: str = ""        # x.com: auth_token cookie value
-    threads_session_cookie: str = ""  # threads.net: sessionid cookie value
 
     # Application
     apply_delay_min_seconds: int = 60
