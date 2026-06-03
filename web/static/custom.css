@@ -226,6 +226,15 @@ input:focus, input[type="password"]:focus, textarea:focus, select:focus {
 .dark .text-blue-700 { color: #60a5fa !important; }
 .dark .text-green-700 { color: #4ade80 !important; }
 
+/* ── Refresh spin (HTMX in-flight) ────────────────────────────────── */
+.htmx-request .htmx-spin {
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
 /* ── Review queue button ───────────────────────────────────────────── */
 .review-queue-btn {
     background-color: #f59e0b;
