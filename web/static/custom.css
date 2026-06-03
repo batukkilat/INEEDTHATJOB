@@ -34,7 +34,7 @@
 .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
 
 input[type="text"], input[type="number"], input[type="email"], input[type="url"],
-input[type="date"], textarea, select {
+input[type="date"], input[type="password"], textarea, select {
     width: 100%;
     padding: 0.375rem 0.5rem;
     font-size: 0.875rem;
@@ -44,7 +44,7 @@ input[type="date"], textarea, select {
     color: #111827;
     outline: none;
 }
-input:focus, textarea:focus, select:focus {
+input:focus, input[type="password"]:focus, textarea:focus, select:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
@@ -200,7 +200,8 @@ input:focus, textarea:focus, select:focus {
 .dark .hover\:bg-gray-50:hover { background-color: #1c2128 !important; }
 .dark .hover\:bg-gray-100:hover { background-color: #1c2128 !important; }
 .dark input[type="text"], .dark input[type="number"], .dark input[type="email"],
-.dark input[type="url"], .dark input[type="date"], .dark textarea, .dark select {
+.dark input[type="url"], .dark input[type="date"], .dark input[type="password"],
+.dark textarea, .dark select {
     background-color: #0d1117;
     border-color: #30363d;
     color: #e6edf3;
