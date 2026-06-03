@@ -18,3 +18,5 @@ generated/
 *.HAR
 debug_glints.py
 debug_screenshots/
+.env.test_backup
+debug_import.py
