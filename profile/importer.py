@@ -140,8 +140,8 @@ def parse_resume(text: str) -> dict:
         log.warning("llm_parse_empty_fallback_to_rules")
         result = parse_resume_text(text)
     # Second pass: extract certifications from tail (often cut off in first pass)
-    if len(text) > 4500:
-        tail_certs = _extract_certs_llm(text[4000:])
+    if len(text) > 8000:
+        tail_certs = _extract_certs_llm(text[7500:])
         if tail_certs:
             existing_names = {c.get("name", "").lower() for c in (result.get("certifications") or [])}
             for c in tail_certs:
@@ -161,17 +161,23 @@ def _parse_with_llm(text: str) -> dict:
 
     system = "You are a resume parser. Output only valid JSON, no prose."
     prompt = (
-        "Parse this resume into JSON with keys: "
-        "skills (array of {name, category, keywords}), "
-        "experiences (array of {company, title, start_date, end_date, location, description, achievements: [{description}]}), "
-        "education (array of {institution, degree, field, start_date, end_date, gpa}), "
-        "certifications (array of {name, issuer, date_obtained}), "
-        "projects (array of {name, description, skills_used}).\n"
-        "- category must be one of: technical, soft, domain, language\n"
-        "- Include up to 5 bullet points per job as achievement entries\n"
-        "- Include all roles including internships\n"
-        "- Extract all certifications/training\n\n"
-        f"Resume:\n{text[:5000]}"
+        "Extract all data from this resume into JSON. Return ONLY valid JSON, no explanation.\n\n"
+        "Required JSON structure:\n"
+        "{\n"
+        '  "skills": [{"name": "string", "category": "technical|soft|domain|language", "keywords": "comma-separated synonyms"}],\n'
+        '  "experiences": [{"company": "string", "title": "string", "start_date": "YYYY-MM", "end_date": "YYYY-MM or null", "location": "string", "description": "string", "achievements": [{"description": "string"}]}],\n'
+        '  "education": [{"institution": "string", "degree": "string", "field": "string", "start_date": "YYYY-MM", "end_date": "YYYY-MM", "gpa": "string or null"}],\n'
+        '  "certifications": [{"name": "string", "issuer": "string", "date_obtained": "YYYY-MM-DD or null"}],\n'
+        '  "projects": [{"name": "string", "description": "string", "skills_used": "comma-separated"}]\n'
+        "}\n\n"
+        "Rules:\n"
+        "- Extract ALL skills, including soft skills and languages spoken\n"
+        "- Include ALL work experience and internships\n"
+        "- Include up to 5 achievement bullets per job\n"
+        "- Extract ALL certifications, training, and online courses\n"
+        "- If a field is not present in the resume, use null or empty string\n"
+        "- Dates as YYYY-MM format where possible\n\n"
+        f"Resume:\n{text[:9000]}"
     )
     try:
         raw = chat(
