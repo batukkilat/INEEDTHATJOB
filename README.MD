@@ -85,7 +85,23 @@ Upload your existing resume (PDF or DOCX). The app reads your skills, experience
 Tell the app which job titles to search for. Be specific: "Finance Staff", "Accounting Officer", "Tax Specialist". The app only fetches listings that match these titles. Also set locations and minimum salary.
 
 **C. Configure email** → Settings → Email (SMTP)  
-Needed only to send applications automatically. You can skip this and apply manually. See the in-app setup guide for Gmail/Outlook steps.
+Needed only to send applications automatically. You can skip this and apply manually.
+
+**Gmail (recommended):**
+1. Go to **myaccount.google.com → Security** and enable **2-Step Verification**.
+2. Under Security, find **App passwords**.
+3. Select app: *Mail*, device: *Other* → type "INEEDTHATJOB" → click **Generate**.
+4. Copy the 16-character password. Your regular Gmail password will not work here.
+5. In Settings → Email (SMTP), enter:
+   - Host: `smtp.gmail.com` · Port: `587`
+   - Username & From Email: your Gmail address
+   - Password: the 16-character app password
+
+**Outlook / Hotmail:**
+- Host: `smtp.office365.com` · Port: `587`
+- Username & Password: your Outlook credentials
+
+**Other providers:** search "*your provider* SMTP settings" — every major service has a help page.
 
 **D. Add platform cookies** → Settings → Platform Cookies  
 The scraper browses job sites as you — it needs your login session. See below.
