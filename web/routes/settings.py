@@ -32,6 +32,7 @@ def _settings_ctx(request: Request, session: Session, **extra) -> dict:
             "glints": bool(app_settings.glints_session_cookie),
             "jobstreet": bool(app_settings.jobstreet_session_cookie),
         },
+        "groq_configured": bool(app_settings.groq_api_key),
         **extra,
     }
 
@@ -193,6 +194,21 @@ async def cookies_save(
     log.info("cookies_updated", platforms=list(updates.keys()))
     return templates.TemplateResponse(request, "settings.html",
                                       _settings_ctx(request, session, cookies_saved=True))
+
+
+@router.post("/groq/save", response_class=HTMLResponse)
+async def groq_save(
+    request: Request,
+    session: Session = Depends(get_session),
+    groq_api_key: str = Form(""),
+):
+    key = groq_api_key.strip()
+    if key:
+        _update_env_file({"GROQ_API_KEY": key})
+        app_settings.groq_api_key = key
+        log.info("groq_key_updated")
+    return templates.TemplateResponse(request, "settings.html",
+                                      _settings_ctx(request, session, groq_saved=True))
 
 
 @router.post("/schedule/toggle", response_class=HTMLResponse)

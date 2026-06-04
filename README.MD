@@ -56,12 +56,11 @@ Nothing is submitted automatically. Every application requires a human click.
 ```bash
 # Install dependencies
 pip install -e .
-
-# Create .env file with your Groq key
-# Windows: create a file named .env in the app folder using Notepad
-# Mac/Linux:
-echo "GROQ_API_KEY=gsk_your_key_here" > .env
 ```
+
+Then either:
+- Create a file named `.env` in the app folder and add `GROQ_API_KEY=gsk_your_key_here`
+- **Or** start the app first and enter the key in Settings → Groq API Key (no file editing needed)
 
 **3. Start the app**
 
