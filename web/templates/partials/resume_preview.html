@@ -1,7 +1,18 @@
 {% if app.resume_content %}
 {% set rc = app.resume_content | fromjson %}
 <div id="resume-preview-{{ app.id }}" class="p-5 border-b border-gray-100 bg-gray-50">
-  <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Resume Preview</p>
+  <div class="flex items-center justify-between mb-3">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Resume Preview</p>
+    {% if app.resume_path %}
+    <a href="/review/{{ app.id }}/download"
+       class="btn btn-sm btn-secondary flex items-center gap-1.5">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="13" height="13">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+      Download DOCX
+    </a>
+    {% endif %}
+  </div>
   {% if rc.get("summary") %}
   <p class="text-sm text-gray-600 mb-3 italic leading-relaxed">{{ rc["summary"] }}</p>
   {% endif %}
