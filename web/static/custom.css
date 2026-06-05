@@ -279,3 +279,55 @@ input:focus, input[type="password"]:focus, textarea:focus, select:focus {
 .dark table thead { background-color: #0d1117; }
 .dark table { color: #c9d1d9; }
 .dark .font-mono { color: #e6edf3; }
+
+/* ── Pink theme ────────────────────────────────────────────────────── */
+html.pink body { background-color: #fff1f2; color: #1f0a11; }
+html.pink aside { background-color: #881337 !important; border-right: 1px solid #9f1239; }
+html.pink .nav-link { color: #fce7f3; }
+html.pink .nav-link:hover { background-color: #9f1239; color: #fff; }
+html.pink .nav-link.active { background-color: #500724; color: #fff; }
+html.pink .border-gray-700 { border-color: #9f1239 !important; }
+html.pink .bg-gray-50 { background-color: #fff1f2 !important; }
+html.pink .bg-gray-100 { background-color: #ffe4e6 !important; }
+html.pink .border-gray-200 { border-color: #fecdd3 !important; }
+html.pink .border-gray-100 { border-color: #ffe4e6 !important; }
+html.pink .text-gray-400 { color: #fb7185 !important; }
+html.pink .text-gray-500 { color: #f43f5e !important; }
+html.pink #theme-toggle { color: #fce7f3; }
+html.pink #theme-toggle:hover { background-color: #9f1239; color: #fff; }
+html.pink .card { border-color: #fecdd3; }
+html.pink .btn-primary { background-color: #e11d48; }
+html.pink .btn-primary:hover { background-color: #be123c; }
+html.pink .btn-secondary { background-color: #fff; color: #9f1239; border-color: #fecdd3; }
+html.pink .btn-secondary:hover { background-color: #fff1f2; }
+html.pink .btn-ghost:hover { background-color: #ffe4e6; color: #be123c; }
+html.pink input:focus, html.pink textarea:focus, html.pink select:focus {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.15);
+}
+/* accent blue → pink */
+html.pink .text-blue-400 { color: #f9a8d4 !important; }
+html.pink .text-blue-500 { color: #ec4899 !important; }
+html.pink .text-blue-600 { color: #db2777 !important; }
+html.pink .text-blue-700 { color: #be185d !important; }
+html.pink .text-blue-900 { color: #831843 !important; }
+html.pink .bg-blue-500 { background-color: #ec4899 !important; }
+html.pink .bg-blue-50  { background-color: #fdf2f8 !important; }
+html.pink .bg-blue-600 { background-color: #db2777 !important; }
+html.pink .border-blue-200 { border-color: #fbcfe8 !important; }
+html.pink .hover\:bg-gray-50:hover  { background-color: #fff1f2 !important; }
+html.pink .hover\:bg-gray-100:hover { background-color: #ffe4e6 !important; }
+html.pink .hover\:bg-red-50:hover   { background-color: #fff1f2 !important; }
+html.pink .badge-blue   { background-color: #fce7f3; color: #be185d; }
+html.pink .badge-gray   { background-color: #ffe4e6; color: #9f1239; }
+html.pink .progress-shimmer {
+    background: linear-gradient(90deg, #ec4899 0%, #f9a8d4 50%, #ec4899 100%);
+    background-size: 200% 100%;
+}
+html.pink .review-queue-btn { background-color: #be185d; color: #fff; }
+html.pink .review-queue-btn:hover { background-color: #9d174d; }
+html.pink .ai-credits-ok { background-color: #f472b6; }
+html.pink .divide-gray-100 > * + * { border-color: #fecdd3; }
+html.pink .divide-y { border-color: #fecdd3; }
+html.pink table thead { background-color: #fff1f2; }
+html.pink .shadow-sm { box-shadow: 0 1px 3px rgba(190, 24, 93, 0.08) !important; }
