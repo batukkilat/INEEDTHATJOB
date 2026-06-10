@@ -171,6 +171,32 @@ async def smtp_test(to: str = Form(...)):
         return HTMLResponse(f'<span class="text-red-500 text-sm">Failed: {e}</span>')
 
 
+def extract_cookie_value(raw: str, cookie_name: str) -> str:
+    """Pull a cookie value out of whatever the user pasted.
+
+    Accepts a bare value, "name=value", a full Cookie header
+    ("a=1; name=value; b=2"), or a DevTools table row ("name<TAB>value...").
+    """
+    import re
+    raw = raw.strip().strip('"').strip()
+    if not raw:
+        return ""
+    m = re.search(rf"(?:^|[;\s]){re.escape(cookie_name)}=([^;\s]+)", raw, re.IGNORECASE)
+    if m:
+        return m.group(1)
+    # DevTools row paste: first column is the cookie name
+    parts = raw.split()
+    if len(parts) >= 2 and parts[0].lower() == cookie_name.lower():
+        return parts[1]
+    # Structured paste (other cookies, "a=1; b=2") that doesn't contain ours — refuse
+    if ";" in raw or "=" in raw or len(parts) > 1:
+        return ""
+    return raw  # bare value
+
+
+_COOKIE_NAMES = {"linkedin": "li_at", "glints": "token", "jobstreet": "JobseekerSessionToken"}
+
+
 @router.post("/cookies/save", response_class=HTMLResponse)
 async def cookies_save(
     request: Request,
@@ -180,15 +206,16 @@ async def cookies_save(
     jobstreet_cookie: str = Form(""),
 ):
     updates = {}
-    if linkedin_cookie.strip():
-        updates["LINKEDIN_SESSION_COOKIE"] = linkedin_cookie.strip()
-        app_settings.linkedin_session_cookie = linkedin_cookie.strip()
-    if glints_cookie.strip():
-        updates["GLINTS_SESSION_COOKIE"] = glints_cookie.strip()
-        app_settings.glints_session_cookie = glints_cookie.strip()
-    if jobstreet_cookie.strip():
-        updates["JOBSTREET_SESSION_COOKIE"] = jobstreet_cookie.strip()
-        app_settings.jobstreet_session_cookie = jobstreet_cookie.strip()
+    pairs = [
+        ("linkedin", linkedin_cookie, "LINKEDIN_SESSION_COOKIE", "linkedin_session_cookie"),
+        ("glints", glints_cookie, "GLINTS_SESSION_COOKIE", "glints_session_cookie"),
+        ("jobstreet", jobstreet_cookie, "JOBSTREET_SESSION_COOKIE", "jobstreet_session_cookie"),
+    ]
+    for platform, raw, env_key, attr in pairs:
+        value = extract_cookie_value(raw, _COOKIE_NAMES[platform])
+        if value:
+            updates[env_key] = value
+            setattr(app_settings, attr, value)
     if updates:
         _update_env_file(updates)
     log.info("cookies_updated", platforms=list(updates.keys()))
