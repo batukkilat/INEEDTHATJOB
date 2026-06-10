@@ -71,6 +71,19 @@ _SCRAPER_MAP = {
 }
 
 
+def _resolve_platforms(platforms: list[str] | None) -> list[str]:
+    """Explicit platforms win; otherwise fall back to SCRAPE_PLATFORMS from config."""
+    if platforms:
+        return platforms
+    try:
+        parsed = json.loads(settings.scrape_platforms)
+        if isinstance(parsed, list) and parsed:
+            return parsed
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return list(_SCRAPER_MAP)
+
+
 async def _scrape_phase(session: Session, max_pages: int, platforms: list[str]) -> list[Job]:
     keywords = _get_keywords(session)
     log.info("pipeline_scrape_start", keywords=keywords, max_pages=max_pages, platforms=platforms)
@@ -207,7 +220,7 @@ async def _queue_phase(session: Session) -> int:
     return queued
 
 
-async def run_pipeline(max_pages: int = 3, platforms: list[str] | None = None) -> dict:
+async def run_pipeline(max_pages: int | None = None, platforms: list[str] | None = None) -> dict:
     global _running, _stage, _stop_requested
     if _running:
         log.warning("pipeline_already_running")
@@ -215,8 +228,9 @@ async def run_pipeline(max_pages: int = 3, platforms: list[str] | None = None) -
 
     _running = True
     _stop_requested = False
-    if platforms is None:
-        platforms = ["linkedin"]
+    platforms = _resolve_platforms(platforms)
+    if max_pages is None:
+        max_pages = settings.scrape_max_pages
     result = {"scraped": 0, "new": 0, "scored": 0, "status": "ok"}
 
     try:
