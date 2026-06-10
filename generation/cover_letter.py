@@ -1,4 +1,5 @@
 """Phase 3: cover letter generation (English + Indonesian)."""
+import asyncio
 import json
 import re
 
@@ -83,7 +84,8 @@ async def generate_cover_letter(job, session: Session, profile: dict | None = No
                 )},
             ]
 
-        result = chat(
+        result = await asyncio.to_thread(
+            chat,
             model=settings.generation_model,
             system=_SYSTEM_PROMPT,
             messages=messages,
@@ -97,7 +99,8 @@ async def generate_cover_letter(job, session: Session, profile: dict | None = No
         log.warning("cover_letter_fabricated_numbers", job_id=job.id, figures=fabricated, attempt=attempt + 1)
 
     # Critique-and-revise pass: ask the model to self-check specificity
-    critique_result = chat(
+    critique_result = await asyncio.to_thread(
+        chat,
         model=settings.generation_model,
         system=_SYSTEM_PROMPT,
         messages=[

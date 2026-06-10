@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import HTMLResponse
 from web.templates_env import templates
@@ -51,7 +53,7 @@ async def import_resume(
         })
     try:
         text = importer.extract_text(content, resume.filename or "upload")
-        parsed = importer.parse_resume(text)
+        parsed = await asyncio.to_thread(importer.parse_resume, text)
         counts = importer.save_to_profile(session, parsed)
         msg = (
             f"Imported: {counts['skills']} skills, {counts['experiences']} roles, "

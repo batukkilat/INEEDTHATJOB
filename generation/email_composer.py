@@ -1,4 +1,6 @@
 """Phase 3: application email drafting."""
+import asyncio
+
 from sqlmodel import Session
 
 from config import settings
@@ -47,7 +49,8 @@ async def compose_email(job, session: Session, profile: dict | None = None) -> t
                    .replace("{top_skills}", top_skills))
 
     log.info("email_compose_start", job_id=job.id)
-    text = chat(
+    text = await asyncio.to_thread(
+        chat,
         model=settings.generation_model,
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
