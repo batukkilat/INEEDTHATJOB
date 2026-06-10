@@ -1,12 +1,15 @@
+import math
+
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse
 from web.templates_env import templates
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func, or_
 from db.database import get_session
 from db.models import Job
 
 router = APIRouter()
 
+PER_PAGE = 25
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -15,18 +18,38 @@ def jobs_list(
     session: Session = Depends(get_session),
     status: str = Query(None),
     platform: str = Query(None),
+    q: str = Query(None),
+    page: int = Query(1, ge=1),
 ):
-    query = select(Job).order_by(Job.compatibility_score.desc(), Job.scraped_at.desc())
+    filters = []
     if status:
-        query = query.where(Job.status == status)
+        filters.append(Job.status == status)
     if platform:
-        query = query.where(Job.platform == platform)
-    jobs = list(session.exec(query).all())
+        filters.append(Job.platform == platform)
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        filters.append(or_(Job.title.like(like), Job.company.like(like)))
+
+    count_query = select(func.count(Job.id))
+    query = select(Job).order_by(Job.compatibility_score.desc(), Job.scraped_at.desc())
+    for f in filters:
+        count_query = count_query.where(f)
+        query = query.where(f)
+
+    total = session.exec(count_query).one()
+    pages = max(1, math.ceil(total / PER_PAGE))
+    page = min(page, pages)
+    jobs = list(session.exec(query.offset((page - 1) * PER_PAGE).limit(PER_PAGE)).all())
+
     return templates.TemplateResponse(request, "jobs/list.html", {
         "current_page": "jobs",
         "jobs": jobs,
         "filter_status": status,
         "filter_platform": platform,
+        "q": q or "",
+        "page": page,
+        "pages": pages,
+        "total": total,
     })
 
 
