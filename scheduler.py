@@ -45,8 +45,8 @@ def start_scheduler() -> None:
         return
     global _scheduler
     _scheduler = AsyncIOScheduler()
-    _add_pipeline_job()
     _scheduler.start()
+    _add_pipeline_job()
     log.info("scheduler_started", cron=_get_cron())
 
 
