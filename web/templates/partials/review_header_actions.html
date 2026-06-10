@@ -1,19 +1,28 @@
-<div id="header-actions-{{ app.id }}" class="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+<div id="header-actions-{{ app.id }}" class="flex gap-2 items-center flex-shrink-0 flex-wrap justify-end">
+  <span id="send-status-{{ app.id }}" class="text-sm"></span>
   {% if app.resume_path %}
   <a href="/review/{{ app.id }}/download" class="btn btn-secondary btn-sm">↓ Resume</a>
   {% endif %}
   {% if job %}
   <button
     onclick="window.open('{{ job.url }}', '_blank'); htmx.ajax('POST', '/review/{{ app.id }}/apply-manual', {target: '#app-{{ app.id }}', swap: 'outerHTML'})"
-    class="btn btn-sm border border-blue-200 text-blue-600 hover:bg-blue-50">
+    class="btn btn-sm border border-blue-200 text-blue-600 hover:bg-blue-50"
+    title="Open the posting and mark this application as applied manually">
     Apply via Platform ↗
   </button>
   {% endif %}
   <button
-    hx-post="/review/{{ app.id }}/approve"
-    hx-target="#app-{{ app.id }}"
-    hx-swap="outerHTML"
-    class="btn btn-primary btn-sm">Approve</button>
+    hx-post="/review/{{ app.id }}/send"
+    hx-target="#send-status-{{ app.id }}"
+    hx-swap="innerHTML"
+    hx-disabled-elt="this"
+    hx-confirm="Send this application email now?"
+    {% if not (app.recipient_email and app.email_subject and app.email_body) %}
+    disabled title="Prepare the application and set a recipient email first"
+    {% endif %}
+    class="btn btn-primary btn-sm disabled:opacity-40 disabled:cursor-not-allowed">
+    Approve &amp; Send
+  </button>
   <button
     hx-get="/review/{{ app.id }}/reject-options"
     hx-target="#header-actions-{{ app.id }}"

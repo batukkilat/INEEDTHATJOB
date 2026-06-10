@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, FileResponse
 from web.templates_env import templates
@@ -6,10 +8,25 @@ from db.database import get_session
 from db.models import Application, Job
 from generation.cover_letter import generate_cover_letter
 from generation.email_composer import compose_email
-from generation.common import extract_contact_email, extract_contact_email_llm
+from generation.common import build_profile_json, extract_contact_email, extract_contact_email_llm
 from apply.engine import send_application
 
 router = APIRouter()
+
+
+def email_source_snippet(description: str | None, email: str | None) -> str | None:
+    """Short quote of where the email appears in the job description, for user trust."""
+    if not description or not email:
+        return None
+    idx = description.find(email)
+    if idx == -1:
+        return None
+    start = max(0, idx - 60)
+    end = min(len(description), idx + len(email) + 60)
+    snippet = " ".join(description[start:end].split())
+    prefix = "…" if start > 0 else ""
+    suffix = "…" if end < len(description) else ""
+    return f"{prefix}{snippet}{suffix}"
 
 
 @router.get("/review", response_class=HTMLResponse)
@@ -76,6 +93,36 @@ def apply_manual(app_id: int, session: Session = Depends(get_session)):
     return HTMLResponse("")
 
 
+@router.post("/review/{app_id}/prepare", response_class=HTMLResponse)
+async def prepare_application(app_id: int, request: Request,
+                              session: Session = Depends(get_session)):
+    """Generate resume, cover letter, and email in one click; suggest a recipient."""
+    app = session.get(Application, app_id)
+    if not app:
+        return HTMLResponse("Application not found", status_code=404)
+    job = session.get(Job, app.job_id)
+    profile = build_profile_json(session)
+
+    from generation.resume import generate_resume
+    if not app.resume_content:
+        docx_path, resume_content = await generate_resume(job, session, profile)
+        app.resume_path = docx_path
+        app.resume_content = json.dumps(resume_content)
+    if not app.cover_letter:
+        app.cover_letter = await generate_cover_letter(job, session, profile)
+    if not app.email_body:
+        app.email_subject, app.email_body = await compose_email(job, session, profile)
+    if not app.recipient_email:
+        app.recipient_email = extract_contact_email(job.description if job else "")
+    session.add(app)
+    session.commit()
+
+    return templates.TemplateResponse(request, "partials/review_card.html", {
+        "app": app, "job": job, "open": True,
+        "email_source": email_source_snippet(job.description if job else None, app.recipient_email),
+    })
+
+
 @router.post("/review/{app_id}/generate-resume", response_class=HTMLResponse)
 async def generate_resume_route(app_id: int, request: Request,
                                 session: Session = Depends(get_session)):
@@ -131,11 +178,14 @@ def update_cover_letter(app_id: int, cover_letter: str = Form(...),
 
 
 @router.put("/review/{app_id}/email", response_class=HTMLResponse)
-def update_email(app_id: int, email_body: str = Form(...),
+def update_email(app_id: int, email_body: str = Form(None), email_subject: str = Form(None),
                  session: Session = Depends(get_session)):
     app = session.get(Application, app_id)
     if app:
-        app.email_body = email_body
+        if email_body is not None:
+            app.email_body = email_body
+        if email_subject is not None and email_subject.strip():
+            app.email_subject = email_subject.strip()
         session.add(app)
         session.commit()
     return HTMLResponse("")
@@ -158,7 +208,8 @@ def suggest_recipient_email(app_id: int, request: Request,
         session.commit()
 
     return templates.TemplateResponse(request, "partials/email_block.html",
-                                      {"app": app, "email_searched": True})
+                                      {"app": app, "email_searched": True,
+                                       "email_source": email_source_snippet(job.description if job else None, email)})
 
 
 @router.post("/review/{app_id}/detect-email", response_class=HTMLResponse)
@@ -175,7 +226,8 @@ async def detect_recipient_email(app_id: int, request: Request,
         session.commit()
     return templates.TemplateResponse(request, "partials/email_block.html",
                                       {"app": app, "email_searched": True,
-                                       "detect_failed": not email})
+                                       "detect_failed": not email,
+                                       "email_source": email_source_snippet(job.description if job else None, email)})
 
 
 @router.put("/review/{app_id}/recipient-email", response_class=HTMLResponse)
@@ -202,7 +254,13 @@ async def send_application_route(app_id: int, request: Request,
     result = await send_application(app_id)
     if result["ok"]:
         return HTMLResponse(
-            '<span class="text-green-600 text-sm font-medium">Sent!</span>',
+            '<span class="text-green-600 text-sm font-medium">Sent ✓</span>'
+            "<script>setTimeout(function(){"
+            f"var el = document.getElementById('app-{app_id}');"
+            "if (el) { el.style.transition = 'opacity .5s, transform .5s';"
+            "el.style.opacity = '0'; el.style.transform = 'translateY(-4px)';"
+            "setTimeout(function(){ el.remove(); }, 500); }"
+            "}, 1200);</script>",
         )
     return HTMLResponse(
         f'<span class="text-red-500 text-sm">Failed: {result["error"]}</span>',

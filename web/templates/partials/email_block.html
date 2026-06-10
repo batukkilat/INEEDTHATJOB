@@ -7,7 +7,18 @@
   {% endif %}>
   <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Application Email</p>
   {% if app.email_body %}
-  <p class="text-xs text-gray-500 mb-1">Subject: <span class="font-medium text-gray-700">{{ app.email_subject }}</span></p>
+  <div class="flex items-center gap-2 mb-2">
+    <label class="text-xs text-gray-400 flex-shrink-0" for="subject-{{ app.id }}">Subject</label>
+    <input
+      id="subject-{{ app.id }}"
+      type="text"
+      name="email_subject"
+      value="{{ app.email_subject or '' }}"
+      hx-put="/review/{{ app.id }}/email"
+      hx-trigger="blur"
+      hx-swap="none"
+      class="flex-1 min-w-0 px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300">
+  </div>
   <textarea
     hx-put="/review/{{ app.id }}/email"
     hx-trigger="blur"
@@ -41,6 +52,9 @@
 
     {% if detect_failed %}
     <span class="text-xs text-gray-400 w-full">No email found in job description.</span>
+    {% endif %}
+    {% if email_source %}
+    <span class="text-xs text-gray-400 w-full">Found in posting: <span class="italic">“{{ email_source }}”</span></span>
     {% endif %}
 
     <button

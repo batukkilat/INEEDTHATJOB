@@ -1,0 +1,85 @@
+{# One review-queue application card. Expects: app, job, optional open, email_source. #}
+{% set score = job.compatibility_score if job and job.compatibility_score is not none else none %}
+<details id="app-{{ app.id }}" name="review-accordion"
+         class="card review-card mb-4 overflow-hidden"
+         {% if open %}open{% endif %}
+         data-score="{{ score if score is not none else -1 }}"
+         data-title="{{ (job.title if job else '') | lower }}"
+         data-company="{{ (job.company if job else '') | lower }}">
+
+  <summary class="review-summary flex items-center gap-4 p-4 cursor-pointer select-none">
+    <svg class="chev flex-shrink-0 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/>
+    </svg>
+
+    <div class="min-w-0 flex-1">
+      <h2 class="font-semibold text-gray-900 truncate">{{ job.title if job else 'Unknown Job' }}</h2>
+      <p class="text-xs text-gray-500 mt-0.5 truncate">
+        {{ job.company if job else '' }}{% if job and job.location %} · {{ job.location }}{% endif %}
+      </p>
+    </div>
+
+    {# Artifact chips #}
+    <div class="hidden sm:flex items-center gap-1 flex-shrink-0">
+      {% for done, label in [(app.resume_content, 'Resume'), (app.cover_letter, 'Letter'), (app.email_body, 'Email')] %}
+      <span class="badge {% if done %}badge-green{% else %}badge-gray opacity-60{% endif %}">
+        {% if done %}✓{% else %}·{% endif %} {{ label }}
+      </span>
+      {% endfor %}
+    </div>
+
+    {# Mini score breakdown #}
+    {% if job and job.score_breakdown %}
+    {% set bd = job.score_breakdown | fromjson %}
+    <div class="hidden md:flex items-end gap-[3px] h-5 flex-shrink-0" aria-hidden="true">
+      {% for key, label in [('skill_match','Skills'), ('experience_match','Experience'), ('title_relevance','Title'),
+                            ('location_match','Location'), ('language_match','Language'), ('salary_match','Salary')] %}
+      {% if key in bd %}
+      <div class="w-[5px] rounded-sm {% if bd[key] >= 0.75 %}bg-emerald-400{% elif bd[key] >= 0.55 %}bg-amber-400{% else %}bg-gray-200{% endif %}"
+           style="height: {{ [bd[key] * 20, 3] | max | int }}px"
+           title="{{ label }}: {{ (bd[key] * 100) | int }}%"></div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if score is not none %}
+    <span class="flex-shrink-0 text-lg font-bold tabular-nums {% if score >= 0.75 %}text-green-600{% elif score >= 0.55 %}text-amber-500{% else %}text-red-400{% endif %}">
+      {{ (score * 100) | int }}%
+    </span>
+    {% endif %}
+  </summary>
+
+  <div class="border-t border-gray-100">
+
+    {# Action bar #}
+    <div class="flex items-center justify-between gap-3 flex-wrap p-4 bg-gray-50 border-b border-gray-100">
+      <div class="flex items-center gap-2 flex-wrap">
+        {% if not (app.resume_content and app.cover_letter and app.email_body) %}
+        <button
+          hx-post="/review/{{ app.id }}/prepare"
+          hx-target="#app-{{ app.id }}"
+          hx-swap="outerHTML"
+          hx-disabled-elt="this"
+          class="btn btn-primary btn-sm disabled:opacity-60 disabled:cursor-wait">
+          ⚡ Prepare Application
+          <span class="htmx-indicator ml-1.5">— writing resume, letter &amp; email… (~90s)</span>
+        </button>
+        {% endif %}
+        {% if job %}
+        <a href="{{ job.url }}" target="_blank" class="btn btn-ghost btn-sm">View posting ↗</a>
+        {% endif %}
+      </div>
+      {% include "partials/review_header_actions.html" %}
+    </div>
+
+    {# Resume preview #}
+    {% include "partials/resume_preview.html" %}
+
+    {# Cover letter #}
+    {% include "partials/cover_letter_block.html" %}
+
+    {# Email #}
+    {% include "partials/email_block.html" %}
+  </div>
+</details>
