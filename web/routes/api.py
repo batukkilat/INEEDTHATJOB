@@ -103,7 +103,7 @@ def pipeline_run(
 ):
     if pipe.is_running():
         return HTMLResponse(_progress(60, "scraping"))
-    known = {"linkedin", "glints", "jobstreet", "x", "threads"}
+    known = {"linkedin", "glints", "jobstreet"}
     active = [p for p in platforms if p in known]
     if not active:
         active = ["linkedin"]

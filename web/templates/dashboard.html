@@ -140,15 +140,13 @@
           "linkedin":  "LinkedIn — largest professional network in Indonesia",
           "glints":    "Glints — popular Southeast Asian job platform",
           "jobstreet": "JobStreet — major Indonesian job board",
-          "x":         "X (Twitter) — job posts from companies and recruiters",
-          "threads":   "Threads — emerging job opportunities",
         } %}
         {% for name, tip in platform_tips.items() %}
         <div class="flex items-center gap-1 text-sm text-gray-600">
           <label class="flex items-center gap-1.5 cursor-pointer">
             <input type="checkbox" name="platforms" value="{{ name }}" form="pipeline-form"
                    class="rounded border-gray-300 platform-cb">
-            {% if name == "x" %}X (Twitter){% elif name == "threads" %}Threads{% else %}{{ name | capitalize }}{% endif %}
+            {{ name | capitalize }}
           </label>
           {{ info(tip) }}
         </div>
