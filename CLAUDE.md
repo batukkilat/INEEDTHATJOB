@@ -32,7 +32,7 @@ App runs at `http://localhost:8000` by default. Config lives in `.env` (see `con
 
 **Python monolith.** One process: FastAPI serves the dashboard and also runs APScheduler for cron-style pipeline execution. No microservices, no containers, no frontend build step.
 
-**Stack:** FastAPI + Jinja2 + HTMX + TailwindCSS (CDN) + SQLite via SQLModel + OpenAI API + Playwright
+**Stack:** FastAPI + Jinja2 + HTMX + TailwindCSS (CDN) + SQLite via SQLModel + Groq API (Llama models) + Playwright
 
 **The pipeline is sequential:**
 ```
@@ -40,7 +40,7 @@ Scrape → Score → Generate → Review (dashboard) → Apply
 ```
 The first four steps are automated. Apply only fires after explicit user approval on the Review Queue page (`/review`).
 
-**Database:** SQLite, single file at `DB_PATH`. SQLModel ORM. Alembic for migrations. Core tables: `skills`, `experiences`, `achievements`, `education`, `certifications`, `projects`, `preferences`, `jobs`, `applications`, `activity_log`.
+**Database:** SQLite, single file at `DB_PATH`. SQLModel ORM. Schema created via `create_all`; migrations are hand-rolled `ALTER TABLE` statements in `db/database.py:run_migrations` (no Alembic). Core tables: `skills`, `experiences`, `achievements`, `education`, `certifications`, `projects`, `preferences`, `jobs`, `applications`, `activity_log`.
 
 **Job status flow:**
 ```
@@ -50,11 +50,12 @@ new → scored → generating → review_ready → approved → applying → app
 ```
 
 **LLM usage:**
-- GPT-4o-mini for bulk work (scoring, parsing job requirements, dedup)
-- GPT-4o for quality work (resume tailoring, cover letters, emails)
+- Groq API (OpenAI-compatible endpoint, see `utils/llm.py`); scoring itself is a pure heuristic (`jobs/scorer.py`) to preserve the free-tier token budget
+- `SCORING_MODEL` (llama-3.1-8b-instant) for bulk work (resume-tail cert extraction, contact-email detection)
+- `GENERATION_MODEL` (llama-3.3-70b-versatile) for quality work (resume tailoring, cover letters, emails, resume import parsing)
 - All prompts are plain `.txt` files in `generation/prompts/` — never hardcoded in Python
-- Every LLM call uses structured outputs (Pydantic models) except cover letters and emails
-- Temperature: `0` for parsing/scoring, `0.3` for resume bullets, `0.5` for cover letters/emails
+- Structured output via forced tool calls (`chat_with_tool`) for resume tailoring; JSON-in-text parsing elsewhere
+- Temperature: `0` for parsing, `0.3` for resume bullets, cover letters, and emails
 
 **Browser automation:** Playwright with one adapter file per ATS (`greenhouse.py`, `lever.py`, etc.). Use semantic selectors (aria labels, form labels, `data-*` attrs). Screenshot every attempt.
 

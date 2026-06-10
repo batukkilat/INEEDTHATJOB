@@ -133,7 +133,7 @@ def pipeline_stop():
 
 @router.post("/pipeline/rescore", response_class=HTMLResponse)
 def pipeline_rescore(session: Session = Depends(get_session)):
-    """Reset all zero-scored or failed jobs back to 'new' so the pipeline re-scores them."""
+    """Reset all jobs still in 'scored' status back to 'new' so the pipeline re-scores them."""
     jobs = list(session.exec(
         select(Job).where(Job.status == "scored")
     ).all())
