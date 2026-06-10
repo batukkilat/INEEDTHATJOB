@@ -23,13 +23,36 @@ def _r(request, template, ctx):
 
 @router.get("/", response_class=HTMLResponse)
 def profile_page(request: Request, session: Session = Depends(get_session)):
+    skills = svc.get_skills(session)
+    experiences = svc.get_experiences(session)
+    education = svc.get_education_list(session)
+
+    hints = []
+    if not skills:
+        hints.append("Add your skills — they drive the job match score.")
+    if not experiences:
+        hints.append("Add work experience — resumes are built from it.")
+    exps_without_achievements = [
+        e for e in experiences if not svc.get_achievements(session, e.id)
+    ]
+    if exps_without_achievements:
+        names = ", ".join(e.company for e in exps_without_achievements[:3])
+        hints.append(
+            f"Add achievement bullets to {names}"
+            f"{'…' if len(exps_without_achievements) > 3 else ''} — "
+            "they become your strongest resume lines."
+        )
+    if not education:
+        hints.append("Add education — many Indonesian employers filter on it.")
+
     return _r(request, "profile/editor.html", {
         "current_page": "profile",
-        "skills": svc.get_skills(session),
-        "experiences": svc.get_experiences(session),
-        "education": svc.get_education_list(session),
+        "skills": skills,
+        "experiences": experiences,
+        "education": education,
         "certifications": svc.get_certifications(session),
         "projects": svc.get_projects(session),
+        "profile_hints": hints,
     })
 
 

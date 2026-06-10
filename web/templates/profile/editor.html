@@ -21,6 +21,19 @@
 
   <div id="import-zone" class="mb-4"></div>
 
+  {% if profile_hints %}
+  <div class="card p-4 mb-6 border-l-4 border-l-amber-400">
+    <p class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Make your profile stronger</p>
+    <ul class="space-y-1">
+      {% for hint in profile_hints %}
+      <li class="text-sm text-gray-600 flex items-start gap-2">
+        <span class="text-amber-400 mt-0.5 flex-shrink-0">→</span>{{ hint }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
   <!-- Jump nav -->
   <div class="flex gap-4 text-sm mb-6 border-b border-gray-200 pb-3 overflow-x-auto">
     <a href="#skills"          class="text-blue-500 hover:text-blue-700 whitespace-nowrap">Skills</a>
