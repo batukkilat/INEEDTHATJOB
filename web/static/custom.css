@@ -1,3 +1,37 @@
+/* ── Typography ────────────────────────────────────────────────────── */
+:root {
+    --font-display: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+body { font-family: var(--font-body); }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+aside .text-sm.font-bold { font-family: var(--font-display); }
+
+/* ── Motion ────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+.card { animation: fadeUp 0.35s ease both; }
+.card:nth-child(2)  { animation-delay: 0.04s; }
+.card:nth-child(3)  { animation-delay: 0.08s; }
+.card:nth-child(4)  { animation-delay: 0.12s; }
+.card:nth-child(5)  { animation-delay: 0.16s; }
+.card:nth-child(6)  { animation-delay: 0.20s; }
+@media (prefers-reduced-motion: reduce) {
+    .card { animation: none; }
+}
+
+/* ── Review accordion ──────────────────────────────────────────────── */
+details.review-card > summary { list-style: none; }
+details.review-card > summary::-webkit-details-marker { display: none; }
+details.review-card > summary:hover { background: rgba(0,0,0,0.015); }
+details.review-card .chev { transition: transform 0.25s ease; }
+details.review-card[open] .chev { transform: rotate(90deg); }
+details.review-card > div { animation: fadeUp 0.25s ease both; }
+.dark details.review-card > summary:hover { background: rgba(255,255,255,0.02); }
+html.pink details.review-card > summary:hover { background: rgba(225,29,72,0.03); }
+
 .nav-link {
     display: flex;
     align-items: center;
@@ -17,14 +51,20 @@
     align-items: center;
     padding: 0.375rem 0.75rem;
     font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 0.375rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
     cursor: pointer;
-    transition: background-color 0.15s;
+    transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
     border: none;
 }
-.btn-primary { background-color: #2563eb; color: #fff; }
-.btn-primary:hover { background-color: #1d4ed8; }
+.btn:active { transform: scale(0.97); }
+.btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.btn-primary {
+    background-color: #2563eb;
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-primary:hover { background-color: #1d4ed8; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255,255,255,0.15); }
 .btn-secondary { background-color: #fff; color: #374151; border: 1px solid #d1d5db; }
 .btn-secondary:hover { background-color: #f9fafb; }
 .btn-danger { background-color: #dc2626; color: #fff; }
