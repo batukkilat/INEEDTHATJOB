@@ -19,13 +19,13 @@
       value="{{ q }}"
       placeholder="Search title or company…"
       class="flex-1 min-w-[180px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 placeholder-gray-300">
-    <select name="status" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700" onchange="this.form.submit()">
+    <select name="status" style="width:auto" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700" onchange="this.form.submit()">
       <option value="">All statuses</option>
       {% for s in ['new', 'scored', 'review_ready', 'applied', 'skipped', 'failed'] %}
       <option value="{{ s }}" {% if filter_status == s %}selected{% endif %}>{{ s | status_label }}</option>
       {% endfor %}
     </select>
-    <select name="platform" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700" onchange="this.form.submit()">
+    <select name="platform" style="width:auto" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700" onchange="this.form.submit()">
       <option value="">All platforms</option>
       {% for p in ['linkedin', 'glints', 'jobstreet'] %}
       <option value="{{ p }}" {% if filter_platform == p %}selected{% endif %}>{{ p | capitalize }}</option>

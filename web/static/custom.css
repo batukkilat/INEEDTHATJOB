@@ -89,9 +89,10 @@ input:focus, input[type="password"]:focus, textarea:focus, select:focus {
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
-.htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
-.htmx-request .htmx-indicator { opacity: 1; }
-.htmx-request.htmx-indicator { opacity: 1; }
+/* Hidden indicators must not reserve layout space (kept buttons artificially wide) */
+.htmx-indicator { display: none; opacity: 0; transition: opacity 200ms ease-in; }
+.htmx-request .htmx-indicator { display: inline-flex; align-items: center; opacity: 1; }
+.htmx-request.htmx-indicator { display: inline-flex; align-items: center; opacity: 1; }
 
 .badge {
     display: inline-flex;
