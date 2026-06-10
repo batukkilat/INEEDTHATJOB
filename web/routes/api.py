@@ -68,6 +68,10 @@ _DONE_SCRIPT = """
   }
   var bar = document.getElementById('pipeline-progress');
   if (bar) { bar.classList.remove('progress-shimmer'); bar.style.width = '0%'; }
+  // Refresh stats cards in place — no manual page reload needed
+  if (window.htmx && document.getElementById('stats')) {
+    htmx.ajax('GET', '/api/stats', {target: '#stats', swap: 'innerHTML'});
+  }
 })();
 </script>
 """
