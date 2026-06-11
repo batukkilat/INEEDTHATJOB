@@ -10,6 +10,7 @@
       var t = localStorage.getItem('ij_theme');
       if (t === 'dark') { document.documentElement.classList.add('dark'); }
       else if (t === 'pink') { document.documentElement.classList.add('pink'); }
+      else if (t === 'glass') { document.documentElement.classList.add('glass'); }
       else if (!t && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
       }
@@ -83,10 +84,14 @@
       <!-- Dark mode toggle -->
       <button id="theme-toggle" onclick="toggleTheme()"
               class="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-700 transition-colors"
-              title="Cycle theme: light → dark → pink">
-        <!-- Sun icon (shown in pink mode → switch to light) -->
+              title="Cycle theme: light → dark → pink → glass">
+        <!-- Sun icon (shown in glass mode → switch to light) -->
         <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" style="display:none">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+        </svg>
+        <!-- Droplet icon (shown in pink mode → switch to glass) -->
+        <svg id="icon-drop" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" style="display:none">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a7.5 7.5 0 0 0 7.5-7.5c0-4.5-7.5-11.25-7.5-11.25S4.5 9 4.5 13.5A7.5 7.5 0 0 0 12 21Z" />
         </svg>
         <!-- Moon icon (shown in light mode → switch to dark) -->
         <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
@@ -126,21 +131,24 @@
       var html = document.documentElement;
       var cur = html.classList.contains('dark') ? 'dark'
               : html.classList.contains('pink') ? 'pink'
+              : html.classList.contains('glass') ? 'glass'
               : 'light';
-      html.classList.remove('dark', 'pink');
-      var next = cur === 'light' ? 'dark' : cur === 'dark' ? 'pink' : 'light';
+      html.classList.remove('dark', 'pink', 'glass');
+      var next = cur === 'light' ? 'dark' : cur === 'dark' ? 'pink' : cur === 'pink' ? 'glass' : 'light';
       if (next !== 'light') html.classList.add(next);
       localStorage.setItem('ij_theme', next);
       updateIcons(next);
     }
     function updateIcons(theme) {
-      document.getElementById('icon-sun').style.display     = theme === 'pink'  ? 'block' : 'none';
+      document.getElementById('icon-sun').style.display     = theme === 'glass' ? 'block' : 'none';
       document.getElementById('icon-moon').style.display    = theme === 'light' ? 'block' : 'none';
       document.getElementById('icon-sparkle').style.display = theme === 'dark'  ? 'block' : 'none';
+      document.getElementById('icon-drop').style.display    = theme === 'pink'  ? 'block' : 'none';
     }
     (function() {
       var t = document.documentElement.classList.contains('dark') ? 'dark'
             : document.documentElement.classList.contains('pink') ? 'pink'
+            : document.documentElement.classList.contains('glass') ? 'glass'
             : 'light';
       updateIcons(t);
     })();

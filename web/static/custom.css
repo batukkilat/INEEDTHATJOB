@@ -372,3 +372,72 @@ html.pink .divide-gray-100 > * + * { border-color: #fecdd3; }
 html.pink .divide-y { border-color: #fecdd3; }
 html.pink table thead { background-color: #fff1f2; }
 html.pink .shadow-sm { box-shadow: 0 1px 3px rgba(190, 24, 93, 0.08) !important; }
+
+/* ── Liquid Glass theme ────────────────────────────────────────────── */
+html.glass body {
+    color: #0f172a;
+    background:
+        radial-gradient(1200px 800px at 85% -10%, rgba(56,189,248,0.38), transparent 60%),
+        radial-gradient(1000px 700px at -10% 30%, rgba(129,140,248,0.38), transparent 55%),
+        radial-gradient(900px 900px at 60% 110%, rgba(244,114,182,0.30), transparent 55%),
+        linear-gradient(160deg, #eef2ff 0%, #e0f2fe 50%, #fdf4ff 100%);
+    background-attachment: fixed;
+}
+html.glass .bg-gray-50 { background-color: transparent !important; }
+html.glass aside {
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border-right: 1px solid rgba(255,255,255,0.12);
+}
+html.glass .border-gray-700 { border-color: rgba(255,255,255,0.12) !important; }
+html.glass .nav-link:hover { background-color: rgba(255,255,255,0.10); }
+html.glass .nav-link.active { background-color: rgba(255,255,255,0.16); }
+html.glass #theme-toggle { color: #cbd5e1; }
+html.glass #theme-toggle:hover { background-color: rgba(255,255,255,0.10); color: #fff; }
+html.glass .card {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+html.glass .card:hover {
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.18), inset 0 1px 0 rgba(255,255,255,0.7);
+}
+html.glass .bg-white { background-color: rgba(255,255,255,0.55) !important; }
+html.glass .bg-gray-100 { background-color: rgba(255,255,255,0.40) !important; }
+html.glass .border-gray-200 { border-color: rgba(255,255,255,0.60) !important; }
+html.glass .border-gray-100 { border-color: rgba(255,255,255,0.50) !important; }
+html.glass input[type="text"], html.glass input[type="number"], html.glass input[type="email"],
+html.glass input[type="url"], html.glass input[type="date"], html.glass input[type="password"],
+html.glass textarea, html.glass select {
+    background-color: rgba(255,255,255,0.60);
+    border-color: rgba(148,163,184,0.45);
+}
+html.glass .btn-secondary {
+    background: rgba(255,255,255,0.50);
+    border-color: rgba(255,255,255,0.70);
+    color: #1e293b;
+}
+html.glass .btn-secondary:hover { background: rgba(255,255,255,0.78); }
+html.glass .btn-primary {
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+html.glass .btn-primary:hover { background: linear-gradient(135deg, #0ea5e9, #4f46e5); }
+html.glass .btn-ghost:hover { background-color: rgba(255,255,255,0.45); color: #1e293b; }
+html.glass table thead { background-color: rgba(255,255,255,0.45); }
+html.glass .badge-gray { background-color: rgba(255,255,255,0.55); color: #334155; }
+html.glass .badge-blue { background-color: rgba(56,189,248,0.25); color: #0369a1; }
+html.glass .divide-gray-100 > * + * { border-color: rgba(255,255,255,0.50); }
+html.glass details.review-card > summary:hover { background: rgba(255,255,255,0.35); }
+html.glass .hover\:bg-gray-50:hover  { background-color: rgba(255,255,255,0.45) !important; }
+html.glass .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.55) !important; }
+html.glass .shadow-sm { box-shadow: 0 4px 16px rgba(31,38,135,0.10) !important; }
+html.glass .progress-shimmer {
+    background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #38bdf8 100%);
+    background-size: 200% 100%;
+}
+html.glass .review-queue-btn { background: rgba(245,158,11,0.85); backdrop-filter: blur(8px); }
+html.glass .ai-credits-track { background-color: rgba(255,255,255,0.45); }
