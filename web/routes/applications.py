@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Request, Depends, Form
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from web.templates_env import templates
 from sqlmodel import Session, select
 from db.database import get_session
@@ -42,6 +42,19 @@ def review_queue(request: Request, session: Session = Depends(get_session)):
         "current_page": "review",
         "applications": applications,
     })
+
+
+@router.post("/review/clear")
+def clear_review_queue(session: Session = Depends(get_session)):
+    apps = session.exec(
+        select(Application).where(Application.apply_status == "pending_review")
+    ).all()
+    for app in apps:
+        app.apply_status = "rejected"
+        app.skip_reason = "queue cleared"
+        session.add(app)
+    session.commit()
+    return RedirectResponse("/review", status_code=303)
 
 
 @router.post("/review/{app_id}/approve", response_class=HTMLResponse)
