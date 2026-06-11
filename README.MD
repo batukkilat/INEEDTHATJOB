@@ -18,6 +18,31 @@ Nothing is submitted automatically. Every application requires a human click.
 
 ---
 
+## Screenshots
+
+**Dashboard** — pipeline status, match quality, and one-click job search
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Jobs** — every scraped listing with scores, search, and filters
+![Jobs](docs/screenshots/jobs.png)
+
+**Review Queue** — generated resume, cover letter, and email per job; approve & send from one card
+![Review Queue](docs/screenshots/review.png)
+
+**History** — every application sent, skipped, or failed
+![History](docs/screenshots/history.png)
+
+**Profile** — the skills, experience, and education the generator draws from
+![Profile](docs/screenshots/profile.png)
+
+**Settings** — schedule, API key, email, and platform cookies
+![Settings](docs/screenshots/settings.png)
+
+**Guide** — built-in setup walkthrough for non-technical users
+![Guide](docs/screenshots/guide.png)
+
+---
+
 ## Requirements
 
 - Python 3.11+
