@@ -36,6 +36,10 @@ def test_capture_start_spawns_task_and_polls(monkeypatch):
         r2 = c.get("/settings/cookies/capture/status")
     assert started == ["linkedin"]
     assert "captured and saved" in r2.text
+    # done response refreshes the configured indicators out-of-band
+    assert 'id="cookie-badges"' in r2.text
+    assert 'hx-swap-oob="true"' in r2.text
+    assert 'id="cookie-set-linkedin"' in r2.text
     _reset_state()
 
 

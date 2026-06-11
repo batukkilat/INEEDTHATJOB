@@ -194,11 +194,7 @@
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Platform Cookies</h2>
         {{ info("Session cookies let the scraper browse each site as you. Paste from browser DevTools — see the guide for step-by-step instructions.") }}
       </div>
-      <div class="flex items-center gap-2 text-xs">
-        {% if cookies_config.linkedin %}<span class="text-green-600 font-medium">LI ✓</span>{% else %}<span class="text-gray-300">LI —</span>{% endif %}
-        {% if cookies_config.glints %}<span class="text-green-600 font-medium">GL ✓</span>{% else %}<span class="text-gray-300">GL —</span>{% endif %}
-        {% if cookies_config.jobstreet %}<span class="text-green-600 font-medium">JS ✓</span>{% else %}<span class="text-gray-300">JS —</span>{% endif %}
-      </div>
+      {% include "partials/cookie_badges.html" %}
     </div>
     <div class="p-6 space-y-4">
       {% if cookies_saved %}
@@ -228,21 +224,21 @@
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">
             LinkedIn <span class="font-normal text-gray-400">(li_at cookie)</span>
-            {% if cookies_config.linkedin %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}
+            <span id="cookie-set-linkedin">{% if cookies_config.linkedin %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}</span>
           </label>
           <input type="password" name="linkedin_cookie" value="" placeholder="{% if cookies_config.linkedin %}••••••••{% else %}Paste li_at value{% endif %}" autocomplete="off">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">
             Glints <span class="font-normal text-gray-400">(token cookie)</span>
-            {% if cookies_config.glints %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}
+            <span id="cookie-set-glints">{% if cookies_config.glints %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}</span>
           </label>
           <input type="password" name="glints_cookie" value="" placeholder="{% if cookies_config.glints %}••••••••{% else %}Paste token value{% endif %}" autocomplete="off">
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1">
             JobStreet <span class="font-normal text-gray-400">(JobseekerSessionToken cookie)</span>
-            {% if cookies_config.jobstreet %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}
+            <span id="cookie-set-jobstreet">{% if cookies_config.jobstreet %}<span class="ml-1 text-green-600 text-xs">● set</span>{% endif %}</span>
           </label>
           <input type="password" name="jobstreet_cookie" value="" placeholder="{% if cookies_config.jobstreet %}••••••••{% else %}Paste JobseekerSessionToken value{% endif %}" autocomplete="off">
         </div>

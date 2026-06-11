@@ -30,11 +30,7 @@ def _settings_ctx(request: Request, session: Session, **extra) -> dict:
             "from_name": app_settings.from_name,
             "configured": bool(app_settings.smtp_user and app_settings.smtp_password),
         },
-        "cookies_config": {
-            "linkedin": bool(app_settings.linkedin_session_cookie),
-            "glints": bool(app_settings.glints_session_cookie),
-            "jobstreet": bool(app_settings.jobstreet_session_cookie),
-        },
+        "cookies_config": _cookies_config(),
         "groq_configured": bool(app_settings.groq_api_key),
         **extra,
     }
@@ -299,6 +295,14 @@ async def _capture_cookie(platform: str) -> None:
         )
 
 
+def _cookies_config() -> dict:
+    return {
+        "linkedin": bool(app_settings.linkedin_session_cookie),
+        "glints": bool(app_settings.glints_session_cookie),
+        "jobstreet": bool(app_settings.jobstreet_session_cookie),
+    }
+
+
 @router.post("/cookies/capture/{platform}", response_class=HTMLResponse)
 async def capture_start(platform: str, request: Request):
     if platform not in _CAPTURE_CONFIG:
@@ -307,13 +311,15 @@ async def capture_start(platform: str, request: Request):
         _capture_state.update(platform=platform, status="running", error=None)
         asyncio.get_running_loop().create_task(_capture_cookie(platform))
     return templates.TemplateResponse(request, "partials/cookie_capture_status.html",
-                                      {"state": _capture_state, "config": _CAPTURE_CONFIG})
+                                      {"state": _capture_state, "config": _CAPTURE_CONFIG,
+                                       "cookies_config": _cookies_config()})
 
 
 @router.get("/cookies/capture/status", response_class=HTMLResponse)
 def capture_status(request: Request):
     return templates.TemplateResponse(request, "partials/cookie_capture_status.html",
-                                      {"state": _capture_state, "config": _CAPTURE_CONFIG})
+                                      {"state": _capture_state, "config": _CAPTURE_CONFIG,
+                                       "cookies_config": _cookies_config()})
 
 
 @router.post("/cookies/save", response_class=HTMLResponse)

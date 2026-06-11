@@ -1,0 +1,5 @@
+<div id="cookie-badges" class="flex items-center gap-2 text-xs"{% if oob is defined and oob %} hx-swap-oob="true"{% endif %}>
+  {% if cookies_config.linkedin %}<span class="text-green-600 font-medium">LI ✓</span>{% else %}<span class="text-gray-300">LI —</span>{% endif %}
+  {% if cookies_config.glints %}<span class="text-green-600 font-medium">GL ✓</span>{% else %}<span class="text-gray-300">GL —</span>{% endif %}
+  {% if cookies_config.jobstreet %}<span class="text-green-600 font-medium">JS ✓</span>{% else %}<span class="text-gray-300">JS —</span>{% endif %}
+</div>
