@@ -1,3 +1,6 @@
+import asyncio
+import time
+
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse
 from web.templates_env import templates
@@ -195,6 +198,107 @@ def extract_cookie_value(raw: str, cookie_name: str) -> str:
 
 
 _COOKIE_NAMES = {"linkedin": "li_at", "glints": "token", "jobstreet": "JobseekerSessionToken"}
+
+# ── Assisted login capture ───────────────────────────────────────────────────
+# Opens a real (headed) browser; the user logs in normally and the session
+# cookie is read from the browser context — no DevTools required.
+
+_CAPTURE_CONFIG = {
+    "linkedin": {
+        "label": "LinkedIn",
+        "login_url": "https://www.linkedin.com/login",
+        "cookie": "li_at",
+        "domain": "linkedin.com",
+        "env": "LINKEDIN_SESSION_COOKIE",
+        "attr": "linkedin_session_cookie",
+    },
+    "glints": {
+        "label": "Glints",
+        "login_url": "https://glints.com/id/login",
+        "cookie": "token",
+        "domain": "glints.com",
+        "env": "GLINTS_SESSION_COOKIE",
+        "attr": "glints_session_cookie",
+    },
+    "jobstreet": {
+        "label": "JobStreet",
+        "login_url": "https://id.jobstreet.com",
+        "cookie": "JobseekerSessionToken",
+        "domain": "jobstreet.com",
+        "env": "JOBSTREET_SESSION_COOKIE",
+        "attr": "jobstreet_session_cookie",
+    },
+}
+
+_CAPTURE_TIMEOUT_SECONDS = 240
+
+# Single capture at a time (single-user app). Mutate keys, never rebind.
+_capture_state: dict = {"platform": None, "status": "idle", "error": None}
+
+
+async def _capture_cookie(platform: str) -> None:
+    cfg = _CAPTURE_CONFIG[platform]
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        _capture_state.update(status="error",
+                              error="Playwright not installed. Run: pip install playwright && playwright install chromium")
+        return
+
+    value = None
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=False)
+            ctx = await browser.new_context()
+            page = await ctx.new_page()
+            await page.goto(cfg["login_url"], wait_until="domcontentloaded", timeout=30000)
+
+            deadline = time.monotonic() + _CAPTURE_TIMEOUT_SECONDS
+            while time.monotonic() < deadline:
+                try:
+                    cookies = await ctx.cookies()
+                except Exception:
+                    break  # user closed the window
+                for c in cookies:
+                    if c["name"] == cfg["cookie"] and cfg["domain"] in c.get("domain", ""):
+                        value = c["value"]
+                        break
+                if value:
+                    break
+                await asyncio.sleep(1.5)
+            await browser.close()
+    except Exception as e:
+        log.error("cookie_capture_failed", platform=platform, error=str(e))
+        _capture_state.update(status="error", error=str(e))
+        return
+
+    if value:
+        _update_env_file({cfg["env"]: value})
+        setattr(app_settings, cfg["attr"], value)
+        log.info("cookie_captured", platform=platform)
+        _capture_state.update(status="done", error=None)
+    else:
+        _capture_state.update(
+            status="error",
+            error="No session cookie found — the window was closed or login took longer than 4 minutes. Try again.",
+        )
+
+
+@router.post("/cookies/capture/{platform}", response_class=HTMLResponse)
+async def capture_start(platform: str, request: Request):
+    if platform not in _CAPTURE_CONFIG:
+        return HTMLResponse("Unknown platform", status_code=404)
+    if _capture_state["status"] != "running":
+        _capture_state.update(platform=platform, status="running", error=None)
+        asyncio.get_running_loop().create_task(_capture_cookie(platform))
+    return templates.TemplateResponse(request, "partials/cookie_capture_status.html",
+                                      {"state": _capture_state, "config": _CAPTURE_CONFIG})
+
+
+@router.get("/cookies/capture/status", response_class=HTMLResponse)
+def capture_status(request: Request):
+    return templates.TemplateResponse(request, "partials/cookie_capture_status.html",
+                                      {"state": _capture_state, "config": _CAPTURE_CONFIG})
 
 
 @router.post("/cookies/save", response_class=HTMLResponse)

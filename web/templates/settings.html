@@ -207,7 +207,22 @@
         Cookies saved. Leave a field blank to keep the existing value.
       </div>
       {% endif %}
-      <p class="text-xs text-gray-400">Paste only fields you want to update. Blank = keep existing. <a href="/guide/#cookies" class="text-blue-500 underline">How to get cookies →</a></p>
+      {# Assisted login capture — no DevTools needed #}
+      <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg space-y-2">
+        <p class="text-xs font-medium text-blue-900">Easiest way: log in via browser</p>
+        <p class="text-xs text-blue-700">A real browser window opens, you log in as usual, and the cookie is saved automatically.</p>
+        <div class="flex gap-2 flex-wrap">
+          <button hx-post="/settings/cookies/capture/linkedin" hx-target="#capture-status" hx-swap="outerHTML"
+                  class="btn btn-secondary btn-sm">Log in to LinkedIn</button>
+          <button hx-post="/settings/cookies/capture/glints" hx-target="#capture-status" hx-swap="outerHTML"
+                  class="btn btn-secondary btn-sm">Log in to Glints</button>
+          <button hx-post="/settings/cookies/capture/jobstreet" hx-target="#capture-status" hx-swap="outerHTML"
+                  class="btn btn-secondary btn-sm">Log in to JobStreet</button>
+        </div>
+        <div id="capture-status"></div>
+      </div>
+
+      <p class="text-xs text-gray-400">Or paste manually — only fields you want to update. Blank = keep existing. <a href="/guide/#cookies" class="text-blue-500 underline">How to get cookies →</a></p>
       <p class="text-xs text-gray-400">Don't worry about format — paste the whole cookie line from DevTools (or everything from the Cookie header) and the right value is picked out automatically.</p>
       <form method="post" action="/settings/cookies/save" class="space-y-3">
         <div>
