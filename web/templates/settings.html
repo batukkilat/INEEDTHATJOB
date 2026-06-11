@@ -281,12 +281,11 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Min Salary (monthly)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Min Salary (monthly)
+            {{ info("Used in match scoring: jobs paying at or above this score higher.") }}
+          </label>
           <input type="number" name="min_salary" value="{{ prefs.min_salary or '' }}" placeholder="e.g. 10000000">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Max Salary (monthly)</label>
-          <input type="number" name="max_salary" value="{{ prefs.max_salary or '' }}" placeholder="e.g. 25000000">
         </div>
       </div>
 
