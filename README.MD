@@ -55,7 +55,10 @@ Nothing is submitted automatically. Every application requires a human click.
 
 ```bash
 # Install dependencies
-pip install -e .
+pip install -r requirements.txt
+
+# Install the browser used for assisted login and auto-apply
+playwright install chromium
 ```
 
 Then either:
@@ -223,7 +226,10 @@ The AI only uses data from your Profile. Update your Profile first, then click G
 Click Stop on the Dashboard. Already-fetched descriptions are cached, so re-running won't re-fetch.
 
 **App won't start / import errors**  
-Run `pip install -e .` again. For database errors, delete the `.db` file in `data/` and restart — the app recreates it (existing data will be lost).
+Run `pip install -r requirements.txt` again. For database errors, delete the `.db` file in `data/` and restart — the app recreates it (existing data will be lost).
+
+**"Playwright not available" when clicking a Log in button**  
+Run `pip install -r requirements.txt` and `playwright install chromium`, then restart the app from the same terminal.
 
 ---
 

@@ -631,6 +631,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "lxml" },
     { name = "pdfplumber" },
+    { name = "playwright" },
     { name = "pydantic-settings" },
     { name = "python-docx" },
     { name = "python-dotenv" },
@@ -642,9 +643,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-browser = [
-    { name = "playwright" },
-]
 dev = [
     { name = "httpx" },
     { name = "pytest" },
@@ -664,7 +662,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "lxml", specifier = ">=5.0" },
     { name = "pdfplumber", specifier = ">=0.11" },
-    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.44" },
+    { name = "playwright", specifier = ">=1.44" },
     { name = "pydantic-settings", specifier = ">=2.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
@@ -676,7 +674,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
     { name = "weasyprint", specifier = ">=62.3" },
 ]
-provides-extras = ["dev", "browser"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "iniconfig"
