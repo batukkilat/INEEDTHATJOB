@@ -290,14 +290,6 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-        <select name="salary_currency" class="w-auto">
-          <option {% if prefs.salary_currency == 'IDR' %}selected{% endif %}>IDR</option>
-          <option {% if prefs.salary_currency == 'USD' %}selected{% endif %}>USD</option>
-        </select>
-      </div>
-
-      <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Company Size
           {{ info("Startup: <200 employees. Mid: 200–1000. Enterprise: 1000+. Leave blank to see all.") }}

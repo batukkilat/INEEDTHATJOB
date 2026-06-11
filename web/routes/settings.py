@@ -48,7 +48,6 @@ def save_preferences(
     target_roles: str = Form(""),
     target_locations: str = Form(""),
     min_salary: str = Form(""),
-    salary_currency: str = Form("IDR"),
     preferred_languages: str = Form(""),
     company_size_preference: str = Form(""),
 ):
@@ -56,7 +55,6 @@ def save_preferences(
         "target_roles": target_roles or None,
         "target_locations": target_locations or None,
         "min_salary": float(min_salary) if min_salary.strip() else None,
-        "salary_currency": salary_currency,
         "preferred_languages": preferred_languages or None,
         "company_size_preference": company_size_preference or None,
     })
