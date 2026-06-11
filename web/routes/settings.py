@@ -251,7 +251,19 @@ async def _capture_cookie(platform: str) -> None:
     value = None
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            # Hide the automation fingerprint: Google (and sometimes LinkedIn)
+            # refuse to sign in when navigator.webdriver is set or the
+            # "controlled by automated software" banner is present.
+            launch_kwargs = dict(
+                headless=False,
+                args=["--disable-blink-features=AutomationControlled", "--no-first-run"],
+                ignore_default_args=["--enable-automation"],
+            )
+            try:
+                # Prefer the user's real Chrome install — looks like a normal browser.
+                browser = await p.chromium.launch(channel="chrome", **launch_kwargs)
+            except Exception:
+                browser = await p.chromium.launch(**launch_kwargs)
             ctx = await browser.new_context()
             page = await ctx.new_page()
             await page.goto(cfg["login_url"], wait_until="domcontentloaded", timeout=30000)
