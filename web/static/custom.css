@@ -35,9 +35,9 @@ details.review-card > div { animation: fadeUp 0.25s ease both; }
     align-items: center;
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     border-radius: 0.375rem;
-    color: #d1d5db;
+    color: #f1f5f9;
     text-decoration: none;
     transition: background-color 0.15s, color 0.15s;
 }
@@ -308,11 +308,10 @@ html.glass body { background: transparent; }
 #glass-fx { display: none; }
 html.glass #glass-fx {
     display: block;
-    position: fixed; inset: -4vmax;
+    position: fixed; inset: 0;
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
-    will-change: transform;
 }
 .glass-blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; will-change: transform; }
 .glass-blob-1 { width: 46vw; height: 46vw; top: -14vw; right: -10vw;
@@ -328,37 +327,7 @@ html.glass #glass-fx {
 @keyframes blobDrift2 { to { transform: translate(12vw, -10vh) scale(1.12); } }
 @keyframes blobDrift3 { to { transform: translate(-14vw, -14vh) scale(0.85); } }
 
-/* Cursor light orb — lerped in JS for watery lag */
-#cursor-glow { display: none; }
-html.glass #cursor-glow {
-    display: block;
-    position: fixed; top: 0; left: 0;
-    width: 320px; height: 320px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.40) 0%, rgba(186,230,253,0.18) 35%, transparent 65%);
-    mix-blend-mode: overlay;
-    pointer-events: none;
-    z-index: 40;
-    will-change: transform;
-}
-
-/* Surface reflection: a soft, wide sheen on each pane, centered on the
-   (heavily lagged) cursor — light glides over the glass, not through it. */
-html.glass .card { position: relative; }
-html.glass .card::after {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: radial-gradient(640px 340px at var(--cursor-x, -600px) var(--cursor-y, -600px),
-        rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.10) 45%, transparent 74%);
-    background-attachment: fixed;
-    opacity: 0.55;
-    transition: opacity 0.8s ease;
-}
-html.glass .card:hover::after { opacity: 1; }
-/* Lens edge: bright top rim, faint depth at bottom. The pane itself never
-   moves on hover — only the light responds (::after opacity below). */
+/* Lens edge: bright top rim, faint depth at bottom. Static on hover. */
 html.glass .card,
 html.glass .card:hover {
     box-shadow:
@@ -367,25 +336,6 @@ html.glass .card:hover {
         inset 0 -1px 0 rgba(31,38,135,0.06);
 }
 
-/* Press glow — a quiet bloom of light under the click */
-.glass-press {
-    position: fixed;
-    width: 90px; height: 90px;
-    margin: -45px 0 0 -45px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.38) 0%, transparent 62%);
-    pointer-events: none;
-    z-index: 60;
-    animation: glassPress 0.45s ease-out forwards;
-}
-@keyframes glassPress {
-    0%   { transform: scale(0.65); opacity: 0; }
-    30%  { opacity: 1; }
-    100% { transform: scale(1.18); opacity: 0; }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .glass-blob { animation: none; }
-    html.glass #cursor-glow { display: none; }
-    .glass-press { animation: none; opacity: 0; }
 }
