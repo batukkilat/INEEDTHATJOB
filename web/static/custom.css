@@ -241,7 +241,7 @@ html.glass body {
 }
 html.glass .bg-gray-50 { background-color: transparent !important; }
 html.glass aside {
-    background: rgba(15, 23, 42, 0.42) !important;
+    background: rgba(15, 23, 42, 0.30) !important;
     backdrop-filter: blur(28px) saturate(1.6);
     -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border-right: 1px solid rgba(255,255,255,0.12);
@@ -250,24 +250,24 @@ html.glass .border-gray-700 { border-color: rgba(255,255,255,0.12) !important; }
 html.glass .nav-link:hover { background-color: rgba(255,255,255,0.10); }
 html.glass .nav-link.active { background-color: rgba(255,255,255,0.16); }
 html.glass .card {
-    background: rgba(255, 255, 255, 0.34);
-    backdrop-filter: blur(28px) saturate(1.7);
-    -webkit-backdrop-filter: blur(28px) saturate(1.7);
-    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(22px) saturate(1.7);
+    -webkit-backdrop-filter: blur(22px) saturate(1.7);
+    border: 1px solid rgba(255, 255, 255, 0.45);
 }
-html.glass .bg-white { background-color: rgba(255,255,255,0.38) !important; }
-html.glass .bg-gray-100 { background-color: rgba(255,255,255,0.28) !important; }
+html.glass .bg-white { background-color: rgba(255,255,255,0.20) !important; }
+html.glass .bg-gray-100 { background-color: rgba(255,255,255,0.16) !important; }
 html.glass .border-gray-200 { border-color: rgba(255,255,255,0.60) !important; }
 html.glass .border-gray-100 { border-color: rgba(255,255,255,0.50) !important; }
 html.glass input[type="text"], html.glass input[type="number"], html.glass input[type="email"],
 html.glass input[type="url"], html.glass input[type="date"], html.glass input[type="password"],
 html.glass textarea, html.glass select {
-    background-color: rgba(255,255,255,0.45);
+    background-color: rgba(255,255,255,0.30);
     border-color: rgba(148,163,184,0.40);
 }
 html.glass .btn-secondary {
-    background: rgba(255,255,255,0.40);
-    border-color: rgba(255,255,255,0.70);
+    background: rgba(255,255,255,0.28);
+    border-color: rgba(255,255,255,0.60);
     color: #1e293b;
 }
 html.glass .btn-secondary:hover { background: rgba(255,255,255,0.78); }
@@ -277,8 +277,8 @@ html.glass .btn-primary {
 }
 html.glass .btn-primary:hover { background: linear-gradient(135deg, #0ea5e9, #4f46e5); }
 html.glass .btn-ghost:hover { background-color: rgba(255,255,255,0.45); color: #1e293b; }
-html.glass table thead { background-color: rgba(255,255,255,0.30); }
-html.glass .badge-gray { background-color: rgba(255,255,255,0.55); color: #334155; }
+html.glass table thead { background-color: rgba(255,255,255,0.18); }
+html.glass .badge-gray { background-color: rgba(255,255,255,0.35); color: #334155; }
 html.glass .badge-blue { background-color: rgba(56,189,248,0.25); color: #0369a1; }
 html.glass .divide-gray-100 > * + * { border-color: rgba(255,255,255,0.50); }
 html.glass details.review-card > summary:hover { background: rgba(255,255,255,0.35); }
@@ -308,10 +308,11 @@ html.glass body { background: transparent; }
 #glass-fx { display: none; }
 html.glass #glass-fx {
     display: block;
-    position: fixed; inset: 0;
+    position: fixed; inset: -4vmax;
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
+    will-change: transform;
 }
 .glass-blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; will-change: transform; }
 .glass-blob-1 { width: 46vw; height: 46vw; top: -14vw; right: -10vw;
@@ -350,22 +351,19 @@ html.glass .card::after {
     border-radius: inherit;
     pointer-events: none;
     background: radial-gradient(640px 340px at var(--cursor-x, -600px) var(--cursor-y, -600px),
-        rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.10) 45%, transparent 74%);
+        rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.10) 45%, transparent 74%);
     background-attachment: fixed;
+    opacity: 0.55;
+    transition: opacity 0.8s ease;
 }
-/* Lens edge: bright top rim, faint depth at bottom */
-html.glass .card {
+html.glass .card:hover::after { opacity: 1; }
+/* Lens edge: bright top rim, faint depth at bottom. The pane itself never
+   moves on hover — only the light responds (::after opacity below). */
+html.glass .card,
+html.glass .card:hover {
     box-shadow:
         0 8px 32px rgba(31, 38, 135, 0.12),
-        inset 0 1px 0 rgba(255,255,255,0.65),
-        inset 0 -1px 0 rgba(31,38,135,0.06);
-    transition: box-shadow 0.4s ease, transform 0.4s ease;
-}
-html.glass .card:hover {
-    transform: translateY(-1px);
-    box-shadow:
-        0 14px 44px rgba(31, 38, 135, 0.16),
-        inset 0 1px 0 rgba(255,255,255,0.75),
+        inset 0 1px 0 rgba(255,255,255,0.60),
         inset 0 -1px 0 rgba(31,38,135,0.06);
 }
 

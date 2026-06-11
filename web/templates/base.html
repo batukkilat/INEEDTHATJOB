@@ -112,6 +112,13 @@
         root.style.setProperty('--cursor-y', cy.toFixed(1) + 'px');
         var glow = document.getElementById('cursor-glow');
         if (glow) glow.style.transform = 'translate3d(' + (cx - 160).toFixed(1) + 'px,' + (cy - 160).toFixed(1) + 'px,0)';
+        // Aurora parallax: the background drifts gently away from the cursor
+        var fx = document.getElementById('glass-fx');
+        if (fx) {
+          var px = (cx / window.innerWidth - 0.5) * -28;
+          var py = (cy / window.innerHeight - 0.5) * -28;
+          fx.style.transform = 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0)';
+        }
         if (Math.abs(tx - cx) > 0.3 || Math.abs(ty - cy) > 0.3) {
           raf = requestAnimationFrame(tick);
         } else {
