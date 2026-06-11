@@ -25,6 +25,7 @@
     <div class="glass-blob glass-blob-2"></div>
     <div class="glass-blob glass-blob-3"></div>
   </div>
+  <div id="cursor-light" aria-hidden="true"></div>
   <!-- Sidebar -->
   <aside class="w-52 bg-gray-900 text-gray-100 flex flex-col flex-shrink-0 h-full">
     <div class="px-4 py-4 border-b border-gray-700 flex items-center justify-between">
@@ -98,6 +99,37 @@
         btn.classList.toggle('open');
       }
     });
+
+    // Liquid glass motion (skipped under prefers-reduced-motion)
+    (function() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      // Aurora drifts in a random direction on every page visit
+      var fx = document.getElementById('glass-fx');
+      if (fx) {
+        var dx = (Math.random() * 2 - 1) * 10;          // vw
+        var dy = (Math.random() * 2 - 1) * 10;          // vh
+        var s  = 1 + (Math.random() * 0.16 - 0.04);     // 0.96–1.12
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            fx.style.transition = 'transform 50s cubic-bezier(0.22, 1, 0.36, 1)';
+            fx.style.transform = 'translate3d(' + dx.toFixed(1) + 'vw,' + dy.toFixed(1) + 'vh,0) scale(' + s.toFixed(3) + ')';
+          });
+        });
+      }
+
+      // Cursor halo: soft while moving, vivid while pressed
+      var light = document.getElementById('cursor-light');
+      if (light) {
+        document.addEventListener('mousemove', function(e) {
+          light.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0)';
+          light.classList.add('on');
+        }, { passive: true });
+        document.addEventListener('mousedown', function() { light.classList.add('pressed'); });
+        document.addEventListener('mouseup',   function() { light.classList.remove('pressed'); });
+        document.addEventListener('mouseleave', function() { light.classList.remove('on'); });
+      }
+    })();
 
   </script>
 

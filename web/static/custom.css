@@ -394,10 +394,11 @@ html.glass .ai-credits-track { background-color: rgba(255,255,255,0.10); }
 #glass-fx { display: none; }
 html.glass #glass-fx {
     display: block;
-    position: fixed; inset: 0;
+    position: fixed; inset: -18vmax;
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
+    will-change: transform;
 }
 .glass-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; will-change: transform; }
 .glass-blob-1 { width: 46vw; height: 46vw; top: -14vw; right: -10vw;
@@ -429,4 +430,33 @@ html.glass #glass-fx {
     .glass-blob { animation: none; }
     .btn:active { transform: none; }
     html.glass .card { transition: none; }
+    html.glass #glass-fx { transition: none !important; transform: none !important; }
+    #cursor-light { display: none !important; }
+}
+
+/* ── Cursor light: a soft halo around the pointer, vivid on press ──── */
+#cursor-light { display: none; }
+@media (pointer: fine) {
+    html.glass #cursor-light {
+        display: block;
+        position: fixed; top: 0; left: 0;
+        width: 260px; height: 260px;
+        margin: -130px 0 0 -130px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(125,211,252,0.14) 0%, rgba(125,211,252,0.05) 45%, transparent 70%);
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 80;
+        opacity: 0;
+        transition: opacity 0.35s ease, transform 0.08s linear;
+        will-change: transform;
+    }
+    html.glass #cursor-light.on { opacity: 1; }
+    html.glass #cursor-light.pressed {
+        background: radial-gradient(circle, rgba(165,243,252,0.32) 0%, rgba(129,140,248,0.14) 45%, transparent 70%);
+        transition: opacity 0.1s ease, transform 0.08s linear;
+    }
+}
+@media (prefers-reduced-transparency: reduce) {
+    #cursor-light { display: none !important; }
 }
