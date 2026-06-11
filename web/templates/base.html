@@ -30,6 +30,14 @@
 </head>
 <body class="bg-gray-50 text-gray-900 h-screen overflow-hidden flex">
 
+  <!-- Liquid glass effect layers (visible only in glass theme) -->
+  <div id="glass-fx" aria-hidden="true">
+    <div class="glass-blob glass-blob-1"></div>
+    <div class="glass-blob glass-blob-2"></div>
+    <div class="glass-blob glass-blob-3"></div>
+  </div>
+  <div id="cursor-glow" aria-hidden="true"></div>
+
   <!-- Sidebar -->
   <aside class="w-52 bg-gray-900 text-gray-100 flex flex-col flex-shrink-0 h-full">
     <div class="px-4 py-4 border-b border-gray-700 flex items-center justify-between">
@@ -126,6 +134,40 @@
         btn.classList.toggle('open');
       }
     });
+
+    // Liquid glass: lagged cursor light + click ripples (active in glass theme only)
+    (function() {
+      var raf = null, tx = -600, ty = -600, cx = -600, cy = -600;
+      function tick() {
+        cx += (tx - cx) * 0.16;
+        cy += (ty - cy) * 0.16;
+        var root = document.documentElement;
+        root.style.setProperty('--cursor-x', cx.toFixed(1) + 'px');
+        root.style.setProperty('--cursor-y', cy.toFixed(1) + 'px');
+        var glow = document.getElementById('cursor-glow');
+        if (glow) glow.style.transform = 'translate3d(' + (cx - 160).toFixed(1) + 'px,' + (cy - 160).toFixed(1) + 'px,0)';
+        if (Math.abs(tx - cx) > 0.5 || Math.abs(ty - cy) > 0.5) {
+          raf = requestAnimationFrame(tick);
+        } else {
+          raf = null;
+        }
+      }
+      document.addEventListener('mousemove', function(e) {
+        if (!document.documentElement.classList.contains('glass')) return;
+        tx = e.clientX; ty = e.clientY;
+        if (cx === -600) { cx = tx; cy = ty; }
+        if (!raf) raf = requestAnimationFrame(tick);
+      }, { passive: true });
+      document.addEventListener('click', function(e) {
+        if (!document.documentElement.classList.contains('glass')) return;
+        var r = document.createElement('span');
+        r.className = 'glass-ripple';
+        r.style.left = e.clientX + 'px';
+        r.style.top = e.clientY + 'px';
+        document.body.appendChild(r);
+        setTimeout(function() { r.remove(); }, 750);
+      });
+    })();
 
     function toggleTheme() {
       var html = document.documentElement;
