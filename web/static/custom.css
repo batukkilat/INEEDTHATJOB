@@ -237,7 +237,8 @@ input:focus, input[type="password"]:focus, textarea:focus, select:focus {
    falls back to solid dark panels where backdrop-filter is missing. */
 :root {
     --glass-fill: rgba(255, 255, 255, 0.06);
-    --glass-fill-hover: rgba(255, 255, 255, 0.10);
+    --glass-fill-hover: rgba(255, 255, 255, 0.13);
+    --glass-fill-press: rgba(165, 243, 252, 0.16);
     --glass-fill-strong: rgba(255, 255, 255, 0.09);
     --glass-fill-dark: rgba(6, 10, 26, 0.45);
     --glass-blur: blur(10px) saturate(160%);
@@ -272,9 +273,17 @@ html.glass .card {
         var(--glass-depth),
         inset 0 1px 0 var(--glass-rim-top),
         inset 0 -1px 0 var(--glass-rim-bottom);
-    transition: background-color 0.2s ease;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
-html.glass .card:hover { background-color: var(--glass-fill-hover); }
+html.glass .card:hover {
+    background-color: var(--glass-fill-hover);
+    border-color: rgba(255, 255, 255, 0.30);
+    box-shadow:
+        var(--glass-depth),
+        inset 0 1px 0 rgba(255, 255, 255, 0.50),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.10);
+}
+html.glass .card:active { background-color: var(--glass-fill-press); }
 
 /* The material — sidebar / popover chrome */
 .glass-surface-dark,
@@ -399,6 +408,16 @@ html.glass #glass-fx {
     pointer-events: none;
     overflow: hidden;
     will-change: transform;
+    animation: auroraSweep 90s ease-in-out infinite;
+}
+/* Seamless loop (0% == 100%); phase is synced to the wall clock in JS
+   so navigation never restarts the motion. */
+@keyframes auroraSweep {
+    0%   { transform: translate3d(-5vw, -4vh, 0) scale(1.05); }
+    25%  { transform: translate3d(3vw, 2vh, 0)  scale(0.98); }
+    50%  { transform: translate3d(5vw, -3vh, 0) scale(1.08); }
+    75%  { transform: translate3d(-3vw, 4vh, 0) scale(1.00); }
+    100% { transform: translate3d(-5vw, -4vh, 0) scale(1.05); }
 }
 .glass-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; will-change: transform; }
 .glass-blob-1 { width: 46vw; height: 46vw; top: -14vw; right: -10vw;
@@ -430,33 +449,7 @@ html.glass #glass-fx {
     .glass-blob { animation: none; }
     .btn:active { transform: none; }
     html.glass .card { transition: none; }
-    html.glass #glass-fx { transition: none !important; transform: none !important; }
-    #cursor-light { display: none !important; }
+    html.glass #glass-fx { animation: none !important; transform: none !important; }
 }
 
-/* ── Cursor light: a soft halo around the pointer, vivid on press ──── */
-#cursor-light { display: none; }
-@media (pointer: fine) {
-    html.glass #cursor-light {
-        display: block;
-        position: fixed; top: 0; left: 0;
-        width: 260px; height: 260px;
-        margin: -130px 0 0 -130px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(125,211,252,0.14) 0%, rgba(125,211,252,0.05) 45%, transparent 70%);
-        mix-blend-mode: screen;
-        pointer-events: none;
-        z-index: 80;
-        opacity: 0;
-        transition: opacity 0.35s ease, transform 0.08s linear;
-        will-change: transform;
-    }
-    html.glass #cursor-light.on { opacity: 1; }
-    html.glass #cursor-light.pressed {
-        background: radial-gradient(circle, rgba(165,243,252,0.32) 0%, rgba(129,140,248,0.14) 45%, transparent 70%);
-        transition: opacity 0.1s ease, transform 0.08s linear;
-    }
-}
-@media (prefers-reduced-transparency: reduce) {
-    #cursor-light { display: none !important; }
 }
