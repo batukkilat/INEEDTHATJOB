@@ -242,7 +242,8 @@ async def _capture_cookie(platform: str) -> None:
         from playwright.async_api import async_playwright
     except ImportError:
         _capture_state.update(status="error",
-                              error="Playwright not installed. Run: pip install playwright && playwright install chromium")
+                              error="Playwright not available in this Python environment. "
+                                    "Start the app with the project venv: .venv/bin/python main.py")
         return
 
     value = None
